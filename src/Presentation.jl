@@ -42,7 +42,7 @@ module Presentation
     function terminal_width_height()
         repl = Base.active_repl
         width = Base.Terminals.width(repl.t)
-        height = Base.Terminals.height(repl.t)
+        height = Base.Terminals.height(repl.t) - 10
         width, height
     end
 
