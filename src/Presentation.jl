@@ -23,7 +23,7 @@ module Presentation
 
     struct Slide
         text::String
-        expressions::Array{Expr}
+        expressions::Array
         function Slide(text, expressions)
             s = new(strip(text), expressions)
             push!(slide_show.slides, s)
