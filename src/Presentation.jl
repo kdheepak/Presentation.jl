@@ -2,7 +2,6 @@ module Presentation
 
     export Slide, next_slide, previous_slide, show_slide
 
-    import Base.show
     import Base: LineEdit, REPL
 
     # repl = Base.active_repl
@@ -66,18 +65,15 @@ module Presentation
         text
     end
 
-    function Base.show(io::IO, s::Slide)
+    function display_slide(s::Slide)
         text = format_slide(s)
-        print(text)
-    end
-
-    function Base.show(io::IO, ::MIME"text/plain", s::Slide)
-        print(io, s)
+        println(text)
     end
 
     function next_slide()
         slide_show.current_expr = 1
         if slide_show.current_slide == length(slide_show.slides)
+            show_slide()
             return nothing
         else
             slide_show.current_slide = slide_show.current_slide + 1
@@ -89,6 +85,7 @@ module Presentation
     function previous_slide()
         slide_show.current_expr = 1
         if slide_show.current_slide == 1
+            show_slide()
             return nothing
         else
             slide_show.current_slide = slide_show.current_slide - 1
@@ -130,7 +127,7 @@ module Presentation
 
     function show_slide()
         clear()
-        println(slide_show.slides[slide_show.current_slide])
+        display_slide(slide_show.slides[slide_show.current_slide])
         return nothing
     end
 
@@ -144,12 +141,10 @@ module Presentation
         D["^Q"] = "^L"
         D["^F"] = (s, data, c) -> begin
             next_slide()
-            show_slide()
             LineEdit.refresh_line(s)
         end
         D["^B"] = (s, data, c) -> begin
             previous_slide()
-            show_slide()
             LineEdit.refresh_line(s)
         end
         D["^E"] = (s, data, c) -> begin
