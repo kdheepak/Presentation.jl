@@ -27,7 +27,7 @@ Slide(
 - Introduction
 
 ...
-
+"""
 )
 
 Slide(
@@ -36,7 +36,11 @@ Slide(
 
 - Julia is a high-level dynamic programming language
 - Designed to address the needs of high-performance numerical analysis and computational science
-"""
+    - Example of addition
+
+""", [
+    :(1+1)
+    ]
 )
 
 ```
