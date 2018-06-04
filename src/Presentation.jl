@@ -4,8 +4,6 @@ module Presentation
 
     import Base: LineEdit, REPL
 
-    # repl = Base.active_repl
-
     mutable struct SlideShow{T}
         slides::Array{T,1}
         current_slide::Int
@@ -39,7 +37,7 @@ module Presentation
     end
 
     function terminal_width_height()
-        repl = Base.active_repl
+        const repl = Base.active_repl
         width = Base.Terminals.width(repl.t)
         height = Base.Terminals.height(repl.t) - 10
         width, height
