@@ -4,10 +4,11 @@ import Markdown
 import REPL: Terminals
 import Base64
 import TerminalExtensions
+import JSON
 
-include("utils.jl")
-include("markdown.jl")
-include("slideshow.jl")
+export Pandoc
+
+include("pandoc.jl")
 
 end
 
