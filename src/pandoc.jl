@@ -17,12 +17,12 @@ end
 @enum CitationMode AuthorInText=1 SuppressAuthor=2 NormalCitation=3
 
 struct Citation
-    id::String
-    prefix::Vector{Inline}
-    suffix::Vector{Inline}
     mode::CitationMode
-    note_number::Int
+    prefix::Vector{Inline}
     hash::Int
+    id::String
+    suffix::Vector{Inline}
+    note_number::Int
 end
 
 const Format = String
@@ -216,7 +216,7 @@ struct Span <: Inline
 end
 
 
-struct Unknown <: Inline
+struct Unknown
     e
     t
 end
@@ -260,21 +260,73 @@ Base.show(io::IO, d::Document) = print(io, """Document(
 )
 
 function get_element(e, t)
-    return Unknown(e, t)
+    u = Unknown(e, t)
+    @show u
+    return u
 end
 
-get_element(e, t::Val{:Space}) = Space()
-get_element(e, t::Val{:Str}) = Str(e["c"])
+get_element(e, ::Type{HorizontalRule}) = HorizontalRule()
+get_element(e, ::Type{Space}) = Space()
+get_element(e, ::Type{Str}) = Str(e["c"])
 
-function get_element(e, t::Val{:Emph})
+function get_element(e, ::Type{Citation})
+    mode = eval(Symbol(e["citationMode"]["t"]))
+    prefix = Inline[get_element(i) for i in e["citationPrefix"]]
+    hash = e["citationHash"]::Int
+    id = e["citationId"]::String
+    suffix = Inline[get_element(i) for i in e["citationSuffix"]]
+    note_number = e["citationNoteNum"]::Int
+    Citation(mode, prefix, hash, id, suffix, note_number)
+end
+
+function get_element(e, ::Type{Cite})
+    citations = Citation[get_element(c, Citation) for c in e["c"][1]]
+    inlines = Inline[get_element(i) for i in e["c"][2]]
+    return Cite(citations, inlines)
+end
+
+function get_element(e, ::Type{Code})
+    attr = Attributes(e["c"][1]...)
+    content = e["c"][2]
+    return Code(attr, content)
+end
+
+function get_element(e, ::Type{Plain})
+    content = Inline[]
+    for se in e["c"]
+        push!(content, get_element(se))
+    end
+    return Plain(content)
+end
+
+function get_element(e, ::Type{CodeBlock})
+    attr = Attributes(e["c"][1]...)
+    content = e["c"][2]::String
+    return CodeBlock(attr, content)
+end
+
+function get_element(e, ::Type{BulletList})
+    bl = Vector{Block}[]
+    for elements in e["c"]
+        sbl = Block[]
+        for element in elements
+            el = get_element(element)
+            push!(sbl, el)
+        end
+        push!(bl, sbl)
+    end
+    return BulletList(bl)
+end
+
+function get_element(e, t::Type{Emph})
     return Emph(Element[get_element(se) for se in e["c"]])
 end
 
-function get_element(e, t::Val{:Para})
+function get_element(e, t::Type{Para})
     return Para(Element[get_element(se) for se in e["c"]])
 end
 
-function get_element(e, t::Val{:Link})
+function get_element(e, ::Type{Link})
     c = e["c"]
     identifier = c[1][1]::String
     classes = String[s for s in c[1][2]]
@@ -290,7 +342,7 @@ function get_element(e, t::Val{:Link})
     return Link(Attributes(identifier, classes, attributes), content, target)
 end
 
-function get_element(e, t::Val{:Header})
+function get_element(e, ::Type{Header})
     c = e["c"]
     level = c[1]::Int
     identifier = c[2][1]::String
@@ -305,7 +357,36 @@ function get_element(e, t::Val{:Header})
     return Header(level, Attributes(identifier, classes, attributes), content)
 end
 
-get_element(e) = get_element(e, Val{Symbol(e["t"])}())
+function get_element(e)
+    t = e["t"]
+    if t == "Header"
+        get_element(e, Header)
+    elseif t == "Link"
+        get_element(e, Link)
+    elseif t == "Space"
+        get_element(e, Space)
+    elseif t == "Emph"
+        get_element(e, Emph)
+    elseif t == "Str"
+        get_element(e, Str)
+    elseif t == "Para"
+        get_element(e, Para)
+    elseif t == "HorizontalRule"
+        get_element(e, HorizontalRule)
+    elseif t == "BulletList"
+        get_element(e, BulletList)
+    elseif t == "Plain"
+        get_element(e, Plain)
+    elseif t == "Code"
+        get_element(e, Code)
+    elseif t == "CodeBlock"
+        get_element(e, CodeBlock)
+    elseif t == "Cite"
+        get_element(e, Cite)
+    else
+        get_element(e, t)
+    end
+end
 
 function get_elements(blocks)
     elements = Element[]
