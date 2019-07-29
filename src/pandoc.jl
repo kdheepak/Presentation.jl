@@ -69,7 +69,7 @@ end
 
 """Ordered list (attributes and a list of items, each a list of blocks)"""
 struct OrderedList <: Block
-    list_attributes::ListAttributes
+    attr::ListAttributes
     content::Vector{Vector{Block}}
 end
 
@@ -265,9 +265,105 @@ function get_element(e, t)
     return u
 end
 
+get_element(e, ::Type{LineBreak}) = LineBreak()
 get_element(e, ::Type{HorizontalRule}) = HorizontalRule()
 get_element(e, ::Type{Space}) = Space()
 get_element(e, ::Type{Str}) = Str(e["c"])
+
+function get_element(e, ::Type{Table})
+    c = e["c"]
+    println(JSON.json(c, 2))
+
+    content = Inline[get_element(i) for i in c[1]]
+
+    alignments = Alignment[ eval(Symbol(a["t"])) for a in c[2] ]
+
+    widths = Float64[w for w in c[3]]
+
+    headers = TableCell[]
+    for blocks in c[4]
+        push!(headers, Block[ get_element(b) for b in blocks ])
+    end
+    rows = Vector{TableCell}[]
+
+    for list_of_blocks in c[5]
+        row = TableCell[]
+        for blocks in list_of_blocks
+            push!(row, Block[ get_element(b) for b in blocks ])
+        end
+        push!(rows, row)
+    end
+
+    return Table(content, alignments, widths, headers, rows)
+end
+
+function get_element(e, ::Type{Span})
+    return Span(
+                Attributes(e["c"][1]...),
+                Inline[get_element(i) for i in e["c"][2]]
+               )
+end
+
+function get_element(e, ::Type{Image})
+    attr = Attributes(e["c"][1]...)
+    content = Inline[get_element(i) for i in e["c"][2]]
+    target = Target(e["c"][3]...)
+    return Image(attr, content, target)
+end
+
+function get_element(e, ::Type{Strikeout})
+    return Strikeout(Inline[get_element(i) for i in e["c"]])
+end
+
+function get_element(e, ::Type{SmallCaps})
+    return SmallCaps(Inline[get_element(i) for i in e["c"]])
+end
+
+function get_element(e, ::Type{Strong})
+    return Strong(Inline[get_element(i) for i in e["c"]])
+end
+
+function get_element(e, ::Type{DefinitionList})
+    c = e["c"]
+    dl = Vector{Pair{Vector{Inline}, Vector{Vector{Block}}}}( [] )
+    for items in c
+        vector_blocks = Vector{Block}[]
+        for blocks in items[2]
+            push!(Block[get_element(b) for b in blocks])
+        end
+        inlines = Inline[get_element(i) for i in items[1]]
+        push!(dl, (inlines => vector_blocks))
+    end
+    DefinitionList(dl)
+end
+
+function get_element(e, ::Type{BlockQuote})
+    blocks = Block[get_element(b) for b in e["c"]]
+    return BlockQuote(blocks)
+end
+
+function get_element(e, ::Type{ListAttributes})
+    number::Int = e[1]
+    style::ListNumberStyle = eval(Symbol(e[2]["t"]))
+    delim::ListNumberDelim = eval(Symbol(e[3]["t"]))
+    return ListAttributes(number, style, delim)
+end
+
+function get_element(e, ::Type{OrderedList})
+    attr = get_element(e["c"][1], ListAttributes)
+    ol = Vector{Block}[]
+    for elements in e["c"][2]
+        sol = Block[]
+        for element in elements
+            el = get_element(element)
+            push!(sol, el)
+        end
+        push!(ol, sol)
+    end
+
+    return OrderedList(attr, ol)
+
+end
 
 function get_element(e, ::Type{Citation})
     mode = eval(Symbol(e["citationMode"]["t"]))
@@ -276,7 +372,7 @@ function get_element(e, ::Type{Citation})
     id = e["citationId"]::String
     suffix = Inline[get_element(i) for i in e["citationSuffix"]]
     note_number = e["citationNoteNum"]::Int
-    Citation(mode, prefix, hash, id, suffix, note_number)
+    return Citation(mode, prefix, hash, id, suffix, note_number)
 end
 
 function get_element(e, ::Type{Cite})
@@ -381,8 +477,28 @@ function get_element(e)
         get_element(e, Code)
     elseif t == "CodeBlock"
         get_element(e, CodeBlock)
+    elseif t == "LineBreak"
+        get_element(e, LineBreak)
     elseif t == "Cite"
         get_element(e, Cite)
+    elseif t == "BlockQuote"
+        get_element(e, BlockQuote)
+    elseif t == "OrderedList"
+        get_element(e, OrderedList)
+    elseif t == "DefinitionList"
+        get_element(e, DefinitionList)
+    elseif t == "Strong"
+        get_element(e, Strong)
+    elseif t == "SmallCaps"
+        get_element(e, SmallCaps)
+    elseif t == "Span"
+        get_element(e, Span)
+    elseif t == "Strikeout"
+        get_element(e, Strikeout)
+    elseif t == "Image"
+        get_element(e, Image)
+    elseif t == "Table"
+        get_element(e, Table)
     else
         get_element(e, t)
     end
@@ -399,7 +515,6 @@ end
 function run_pandoc(filename)
     cmd = `pandoc -t json $filename`
     data = read(cmd, String)
-    println(data)
     return Document(JSON.parse(data))
 end
 
