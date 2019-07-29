@@ -6,7 +6,13 @@ abstract type Inline <: Element end
 struct Attributes
     identifier::String
     classes::Vector{String}
-    attributes::Vector{Pair}
+    attributes::Vector{Pair{String, String}}
+    function Attributes(identifier, classes, attributes)
+        identifier = String(identifier)
+        classes = String[c for c in classes]
+        attributes = Pair{String, String}[attr[1] => attr[2] for attr in attributes]
+        return new(identifier, classes, attributes)
+    end
 end
 
 @enum Alignment AlignLeft=1 AlignRight=2 AlignCenter=3 AlignDefault=4
@@ -265,15 +271,58 @@ function get_element(e, t)
     return u
 end
 
+get_element(e, ::Type{SoftBreak}) = SoftBreak()
 get_element(e, ::Type{LineBreak}) = LineBreak()
 get_element(e, ::Type{HorizontalRule}) = HorizontalRule()
 get_element(e, ::Type{Space}) = Space()
 get_element(e, ::Type{Str}) = Str(e["c"])
 
+function get_element(e, ::Type{LineBlock})
+    content = Vector{Inline}[]
+    for inlines in e["c"]
+        push!(content, Inline[get_element(i) for i in inlines])
+    end
+    LineBlock(content)
+end
+
+function get_element(e, ::Type{Superscript})
+    return Superscript(Inline[get_element(i) for i in e["c"]])
+end
+
+function get_element(e, ::Type{Subscript})
+    return Subscript(Inline[get_element(i) for i in e["c"]])
+end
+
+function get_element(e, ::Type{Note})
+    return Note(Block[get_element(i) for i in e["c"]])
+end
+
+function get_element(e, ::Type{Math})
+    math_type = eval(Symbol(e["c"][1]["t"]))
+    content = e["c"][2]::String
+    return Math(math_type, content)
+end
+
+function get_element(e, ::Type{RawInline})
+    format = e["c"][1]::String
+    content = e["c"][2]::String
+    return RawInline(format, content)
+end
+
+function get_element(e, ::Type{RawBlock})
+    format = e["c"][1]::String
+    content = e["c"][2]::String
+    return RawBlock(format, content)
+end
+
+function get_element(e, ::Type{Quoted})
+    quote_type = eval(Symbol(e["c"][1]["t"]))
+    content = Inline[get_element(i) for i in e["c"][2]]
+    return Quoted(quote_type, content)
+end
+
 function get_element(e, ::Type{Table})
     c = e["c"]
-    println(JSON.json(c, 2))
-
     content = Inline[get_element(i) for i in c[1]]
 
     alignments = Alignment[ eval(Symbol(a["t"])) for a in c[2] ]
@@ -499,6 +548,24 @@ function get_element(e)
         get_element(e, Image)
     elseif t == "Table"
         get_element(e, Table)
+    elseif t == "SoftBreak"
+        get_element(e, SoftBreak)
+    elseif t == "Quoted"
+        get_element(e, Quoted)
+    elseif t == "RawInline"
+        get_element(e, RawInline)
+    elseif t == "RawBlock"
+        get_element(e, RawBlock)
+    elseif t == "Math"
+        get_element(e, Math)
+    elseif t == "Superscript"
+        get_element(e, Superscript)
+    elseif t == "Subscript"
+        get_element(e, Subscript)
+    elseif t == "Note"
+        get_element(e, Note)
+    elseif t == "LineBlock"
+        get_element(e, LineBlock)
     else
         get_element(e, t)
     end
