@@ -271,6 +271,7 @@ function get_element(e, t)
     return u
 end
 
+get_element(e, ::Type{Null}) = Null()
 get_element(e, ::Type{SoftBreak}) = SoftBreak()
 get_element(e, ::Type{LineBreak}) = LineBreak()
 get_element(e, ::Type{HorizontalRule}) = HorizontalRule()
@@ -384,6 +385,12 @@ function get_element(e, ::Type{DefinitionList})
         push!(dl, (inlines => vector_blocks))
     end
     DefinitionList(dl)
+end
+
+function get_element(e, ::Type{Div})
+    attr = Attributes(e["c"][1]...)
+    blocks = Block[get_element(b) for b in e["c"]]
+    return BlockQuote(attr, blocks)
 end
 
 function get_element(e, ::Type{BlockQuote})
@@ -566,6 +573,10 @@ function get_element(e)
         get_element(e, Note)
     elseif t == "LineBlock"
         get_element(e, LineBlock)
+    elseif t == "Div"
+        get_element(e, Div)
+    elseif t == "Null"
+        get_element(e, Null)
     else
         get_element(e, t)
     end
