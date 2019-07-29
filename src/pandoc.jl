@@ -267,7 +267,7 @@ Base.show(io::IO, d::Document) = print(io, """Document(
 
 function get_element(e, t)
     u = Unknown(e, t)
-    @show u
+    @warn "Unknown element parsed: $u"
     return u
 end
 
