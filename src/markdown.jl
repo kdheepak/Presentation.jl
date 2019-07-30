@@ -5,68 +5,7 @@ text(h::Pandoc.Header) = join([text(e) for e in h.content])
 text(s::Pandoc.Str) = s.content
 text(s::Pandoc.Space) = " "
 text(p::Pandoc.Para) = join([text(e) for e in p.content])
-
-function Base.read(::Type{PandocMarkdown}, filename::String)
-    return Pandoc.run_pandoc(filename)
-end
-
-draw_border(x, y, w, h) = draw_border(x, y, w, h, Crayon())
-
-function draw_border(x, y, w, h, c)
-
-    cmove(x, y)             ; print(c(repeat("━", w)))
-    cmove(x, y + h)         ; print(c(repeat("━", w)))
-    for i in 1:h
-        cmove(x, y + i)     ; print(c("┃"))
-        cmove(x + w, y + i) ; print(c("┃"))
-    end
-    cmove(x, y)             ; print(c("┏"))
-    cmove(x + w, y)         ; print(c("┓"))
-    cmove(x, y + h)         ; print(c("┗"))
-    cmove(x + w, y + h)     ; print(c("┛"))
-
-end
-
-render(e::Pandoc.Element) = error("Not implemented renderer for $e")
-
-function render(cb::Pandoc.CodeBlock)
-    width, height = canvassize()
-    x, y = round(Int, width / 2), round(Int, mean(0, height))
-end
-
-render(h::Pandoc.Header) = render(h, Val{h.level}())
-
-function render(header::Pandoc.Header, level::Val{1})
-    width, height = canvassize()
-    x, y = round(Int, width / 2), round(Int, mean(0, height))
-    t = text(header)
-    cmove(x - round(Int, length(t)/2), y)
-    c = Crayon(bold=true)
-    print(c(t))
-    draw_border(x - round(Int, length(t) / 2) - 2, y-1, length(t) + 3, 2)
-    cmove_bottom()
-end
-
-function render(header::Pandoc.Header, level::Val{2})
-    width, height = canvassize()
-    x, y = round(Int, width / 2), round(Int, mean(0, height / 4))
-    t = text(header)
-    cmove(x - round(Int, length(t)/2), y)
-    c = Crayon(bold=true)
-    print(c(t))
-    draw_border(x - round(Int, length(t) / 2) - 2, y-1, length(t) + 3, 2)
-    cmove_bottom()
-end
-
-function render(para::Pandoc.Para)
-    width, height = canvassize()
-    x, y = round(Int, width / 8), round(Int, height / 2)
-    t = text(para)
-    cmove(x, y)
-    c = Crayon()
-    print(c(t))
-    cmove_bottom()
-end
+text(c::Pandoc.Code) = "`$(Crayon(foreground=:red)(c.content))`"
 
 const Slide = Vector{Pandoc.Element}
 
@@ -101,14 +40,133 @@ function Slides(d::Pandoc.Document)
     return slides
 end
 
-function render(s::Slides)
-    clear()
-    for e in s.content[s.current_slide]
-        render(e)
+function Base.read(::Type{PandocMarkdown}, filename::String)
+    return Pandoc.run_pandoc(filename)
+end
+
+draw_border(x, y, w, h) = draw_border(x, y, w, h, Crayon())
+
+function draw_border(x, y, w, h, c)
+
+    cmove(x, y)             ; print(c(repeat("━", w)))
+    cmove(x, y + h)         ; print(c(repeat("━", w)))
+    for i in 1:h
+        cmove(x, y + i)     ; print(c("┃"))
+        cmove(x + w, y + i) ; print(c("┃"))
+    end
+    cmove(x, y)             ; print(c("┏"))
+    cmove(x + w, y)         ; print(c("┓"))
+    cmove(x, y + h)         ; print(c("┗"))
+    cmove(x + w, y + h)     ; print(c("┛"))
+
+end
+
+render(e::Pandoc.Element) = error("Not implemented renderer for $e")
+
+function render(e::Pandoc.CodeBlock, x, y)
+    w = round(Int, getW() * 7 / 8)
+    for code_line in split(strip(e.content), '\n')
+        t = replace(code_line, "\\" => "")
+        c = Crayon(background=(255, 255, 255))
+        for line in wrap(code_line)
+            cmove(x, y)
+            print(c(line))
+            print(c(repeat(" ", w - getX())))
+            y += 1
+        end
     end
 end
 
-render(d::Pandoc.Document) = render(Slides(d))
+render(h::Pandoc.Header, x, y) = render(h, x, y, Val{h.level}())
 
-render(::Type{T}, filename::String) where T = render(read(T, filename))
+function render(e::Pandoc.Header, x, y, level::Val{1})
+    t = text(e)
+    w = maximum(length(t))
+    c = Crayon(bold=true)
+    lines = wrap(t)
+    for line in lines
+        cmove(x - round(Int, w / 2), y)
+        print(c(line))
+        y += 1
+    end
+    draw_border(x - round(Int, w / 2) - 2, y - length(lines) - 1, w + 3, length(lines) + 1)
+end
+
+function render(e::Pandoc.Header, x, y, level::Val{2})
+    t = text(e)
+    w = maximum(length(t))
+    c = Crayon(bold=true)
+    lines = wrap(t)
+    for line in lines
+        cmove(x - round(Int, w / 2), y)
+        print(c(line))
+        y += 1
+    end
+    draw_border(x - round(Int, w / 2) - 2, y - length(lines) - 1, w + 3, length(lines) + 1)
+end
+
+function render(e::Pandoc.Para, x, y)
+    t = text(e)
+    c = Crayon()
+    for line in wrap(t)
+        cmove(x, y)
+        print(c(line))
+        y += 1
+    end
+end
+
+wrap(s) = wrap(s, round(Int, getW() * 3 / 4))
+
+function wrap(s, w::Int)
+    s = strip(s)
+    length(s) < w && return String[s]
+    i = findprev(" ", s, w)
+    i = (i == nothing) ? w : i[1]
+    first, remaining = s[1:i], s[i+1:end]
+    first = strip(first)
+    remaining = strip(remaining)
+    return vcat(String[first], wrap(remaining, w))
+end
+
+function render(s::Slides)
+    clear()
+    width, height = canvassize()
+    for e in current_slide(s)
+        if typeof(e) == Pandoc.Header && e.level == 1
+            x, y = round(Int, width / 2), round(Int, height / 2)
+            render(e, x, y)
+        elseif typeof(e) == Pandoc.Header && e.level == 2
+            x, y = round(Int, width / 2), round(Int, height / 4)
+            render(e, x, y)
+        elseif typeof(e) == Pandoc.Para
+            x = round(Int, width / 8)
+            y = getY() + 2
+            render(e, x, y)
+        elseif typeof(e) == Pandoc.CodeBlock
+            x = round(Int, width / 8)
+            y = getY() + 2
+            render(e, x, y)
+
+        end
+    end
+    cmove_bottom()
+end
+
 render(filename::String) = render(PandocMarkdown, filename)
+render(::Type{T}, filename::String) where T = render(read(T, filename))
+
+current_slide(s::Slides) = s.content[s.current_slide]
+
+function next(s::Slides)
+    if s.current_slide < length(s.content)
+        s.current_slide += 1
+    end
+    render(s)
+end
+
+function previous(s::Slides)
+    if s.current_slide > 1
+        s.current_slide -= 1
+    end
+    render(s)
+end

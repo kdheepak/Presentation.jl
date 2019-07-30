@@ -4,14 +4,14 @@ const ESC = "\u001B"
 
 canvassize() = Base.displaysize(stdout) |> reverse
 
-pos() = pos(terminal)
-getX() = getX(terminal)
-getY() = getY(terminal)
+pos() = pos(TERMINAL)
+getX() = getX(TERMINAL)
+getY() = getY(TERMINAL)
 getW() = canvassize()[1]
 getH() = canvassize()[2]
-cmove(x, y) = cmove(terminal, x, y)
-clear() = clear(terminal)
-cmove_bottom() = cmove(1, getH())
+cmove(x, y) = cmove(TERMINAL, x, y)
+clear() = clear(TERMINAL)
+cmove_bottom() = cmove(1, getH() - 1)
 
 pos(t::Terminals.TTYTerminal) = (getX(t), getY(t))
 
