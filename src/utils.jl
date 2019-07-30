@@ -1,21 +1,10 @@
 mean(x::Number, y::Number) = (x + y) / 2
 
-function terminal_dimension()
-    return displaysize(stdout) |> reverse
+function displaysize()
+    return Base.displaysize(terminal)
 end
 
-@doc """
-   input(prompt::String="")::String
-
-Read a string from STDIN. The trailing newline is stripped.
-
-The prompt string, if given, is printed to standard output without a
-trailing newline before reading input.
-""" ->
-function input(prompt::String="")::String
-   print(prompt)
-   return chomp(readline())
-end
+pos() = Terminals.pos(terminal)
 
 function cursor_position()
     io = IOBuffer();
