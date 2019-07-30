@@ -2,12 +2,15 @@ module Presentation
 
 import Pandoc
 import REPL
-import Terminals
+import REPL: Terminals
+using Crayons
 
-export render, text
+export render, text, displaysize
 
 include("utils.jl")
 include("markdown.jl")
+
+terminal = nothing
 
 function __init__()
     global terminal
