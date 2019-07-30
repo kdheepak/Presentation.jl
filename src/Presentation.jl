@@ -3,9 +3,11 @@ module Presentation
 import Pandoc
 import REPL
 import REPL: Terminals
+import Base: read
+
 using Crayons
 
-export render, text, displaysize
+export render, text, displaysize, read
 
 include("utils.jl")
 include("markdown.jl")
