@@ -7,7 +7,7 @@ import Base: read
 
 using Crayons
 
-export render, next, previous, wrap
+export render, next, previous, wrap, current_slide
 
 include("utils.jl")
 include("renderer.jl")

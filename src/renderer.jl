@@ -1,6 +1,9 @@
 abstract type PandocMarkdown end
 
 text(x) = repr(x)
+function text(l::Pandoc.Link)
+    return strip(text(l.content[1].target.url), ['"'])
+end
 text(h::Pandoc.Header) = join([text(e) for e in h.content])
 text(s::Pandoc.Str) = s.content
 text(s::Pandoc.Space) = " "

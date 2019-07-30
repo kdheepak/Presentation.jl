@@ -39,7 +39,7 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [[Pandoc]]
 deps = ["JSON", "Test"]
-git-tree-sha1 = "39529a89455c6881710a4da96ab49b84418a045b"
+git-tree-sha1 = "02abc88e23256edd483f5b37b031703b2460b917"
 repo-rev = "master"
 repo-url = "https://github.com/kdheepak/Pandoc.jl"
 uuid = "f853b5e0-b243-11e9-0043-7da5023c5ee7"
