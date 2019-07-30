@@ -10,7 +10,7 @@ using Crayons
 export render, next, previous, wrap
 
 include("utils.jl")
-include("markdown.jl")
+include("renderer.jl")
 
 TERMINAL = nothing
 
