@@ -1,9 +1,7 @@
-function width()
-    Terminals.width(Base.active_repl.t)
-end
+mean(x::Number, y::Number) = (x + y) / 2
 
-function height()
-    Terminals.height(Base.active_repl.t)
+function terminal_dimension()
+    return displaysize(stdout) |> reverse
 end
 
 @doc """
@@ -19,10 +17,13 @@ function input(prompt::String="")::String
    return chomp(readline())
 end
 
-function get_cursor_row()
+function cursor_position()
     io = IOBuffer();
     script = abspath(joinpath(dirname(@__FILE__), "script.sh"))
     run(pipeline(`$script`, stdout=io))
-    parse(Int, strip(String(take!(io))))
+    r, c = split(strip(String(take!(io))), ",")
+    return (parse(Int, r), parse(Int, c))
 end
+
+cursor_position(x, y) = print("$ESC[$(y);$(x)H")
 

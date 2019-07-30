@@ -44,6 +44,14 @@ uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 [[Mmap]]
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
+[[Pandoc]]
+deps = ["JSON", "Test"]
+git-tree-sha1 = "39529a89455c6881710a4da96ab49b84418a045b"
+repo-rev = "master"
+repo-url = "https://github.com/kdheepak/Pandoc.jl"
+uuid = "f853b5e0-b243-11e9-0043-7da5023c5ee7"
+version = "0.1.0"
+
 [[Parsers]]
 deps = ["Dates", "Test"]
 git-tree-sha1 = "db2b35dedab3c0e46dc15996d170af07a5ab91c9"

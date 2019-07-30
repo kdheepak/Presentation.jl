@@ -1,14 +1,11 @@
 module Presentation
 
-import Markdown
-import REPL: Terminals
-import Base64
-import TerminalExtensions
-import JSON
+import Pandoc
 
-export Pandoc
+export render, text
 
-include("pandoc.jl")
+include("utils.jl")
+include("markdown.jl")
 
 end
 
