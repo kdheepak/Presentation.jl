@@ -49,9 +49,7 @@ const O_NOCTTY = Base.Filesystem.JL_O_NOCTTY
 const OS_HANDLE = Base.OS_HANDLE
 
 function getXY(t::Terminals.TTYTerminal)
-
     fd = ccall(:jl_uv_file_handle, Base.OS_HANDLE, (Ptr{Cvoid},), stdin.handle)
-
     systemerror("tcgetattr",
                 ccall(:tcgetattr, Cint, (Cint, Ptr{Cvoid}), fd, TERM) == -1)
     systemerror("tcgetattr",
@@ -60,20 +58,21 @@ function getXY(t::Terminals.TTYTerminal)
     systemerror("tcsetattr",
                 ccall(:tcsetattr, Cint, (Cint, Cint, Ptr{Cvoid}), fd, TCSANOW, TERM) == -1
                )
+    write(stdout, "$(Terminals.CSI)6n")
+    buf = UInt8[]
+    while true
+        ch = read(stdin, 1)[1]
+        if Char(ch) == 'R'
+            break
+        end
+        push!(buf, ch)
+    end
     systemerror("tcsetattr",
                 ccall(:tcsetattr, Cint, (Cint, Cint, Ptr{Cvoid}), fd, TCSANOW, RESTORE) == -1
                )
 
-    # Does not work
-    # print(stdout, "$(Terminals.CSI)6n")
-    # ch = read(stdin)
-
-    io = IOBuffer();
-    script = abspath(joinpath(dirname(@__FILE__), "script.sh"))
-    run(pipeline(`$script`, stdout=io))
-    r, c = split(strip(String(take!(io))), ",")
+    r, c = split(String(buf[3:end]), ";")
     return parse(Int, c), parse(Int, r)
-
 end
 
 canvassize() = Base.displaysize(stdout) |> reverse
@@ -86,7 +85,7 @@ getW() = canvassize()[1]
 getH() = canvassize()[2]
 cmove(x, y) = cmove(TERMINAL, x, y)
 clear() = clear(TERMINAL)
-cmove_bottom() = cmove(1, getH() - 10)
+cmove_bottom() = cmove(1, getH() - 2)
 
 pos(t::Terminals.TTYTerminal) = (getX(t), getY(t))
 

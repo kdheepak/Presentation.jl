@@ -7,7 +7,7 @@ import Base: read
 
 using Crayons
 
-export render, next, previous, wrap, current_slide, termios, TERM, RESTORE, ICANON, ECHO, TCSETS, TCSANOW,O_RDWR, O_NOCTTY
+export render, next, previous, current_slide
 
 
 include("utils.jl")
