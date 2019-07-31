@@ -6,9 +6,10 @@ import REPL: Terminals
 import Base: read
 
 using Crayons
+using Highlights
+using Highlights.Format
 
 export render, next, previous, current_slide
-
 
 include("utils.jl")
 include("renderer.jl")

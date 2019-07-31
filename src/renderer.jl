@@ -64,19 +64,40 @@ function draw_border(x, y, w, h, c)
 
 end
 
+function Format.render(io::IO, ::MIME"text/ansi", tokens::Format.TokenIterator)
+    for (str, id, style) in tokens
+        fg = style.fg.active ? map(Int, (style.fg.r, style.fg.g, style.fg.b)) : :nothing
+        bg = style.bg.active ? map(Int, (style.bg.r, style.bg.g, style.bg.b)) : :nothing
+        crayon = Crayon(
+            foreground = fg,
+            background = bg,
+            bold       = style.bold,
+            italics    = style.italic,
+            underline  = style.underline,
+        )
+        print(io, crayon, str, inv(crayon))
+    end
+end
+
 render(e::Pandoc.Element) = error("Not implemented renderer for $e")
 
 function render(e::Pandoc.CodeBlock, x, y)
-    w = round(Int, getW() * 7 / 8)
-    for code_line in split(strip(e.content), '\n')
-        t = replace(code_line, "\\" => "")
-        c = Crayon(background=(255, 255, 255))
-        for line in wrap(code_line)
-            cmove(x, y)
-            print(c(line))
-            print(c(repeat(" ", w - getX())))
-            y += 1
-        end
+    w = round(Int, getW() * 6 / 8)
+    io = IOBuffer()
+    highlight(io, MIME("text/ansi"), e.content, Lexers.JuliaLexer)
+    content = String(take!(io))
+    c = Crayon(background = (255, 255, 255))
+    save_y = y
+    for code_line in split(content, '\n')
+        cmove(x, y)
+        println(c(repeat(" ", w)))
+        y += 1
+    end
+    y = save_y
+    for code_line in split(content, '\n')
+        cmove(x, y)
+        println(c(code_line))
+        y += 1
     end
 end
 
@@ -121,13 +142,12 @@ end
 wrap(s) = wrap(s, round(Int, getW() * 3 / 4))
 
 function wrap(s, w::Int)
-    s = strip(s)
     length(s) < w && return String[s]
     i = findprev(" ", s, w)
     i = (i == nothing) ? w : i[1]
     first, remaining = s[1:i], s[i+1:end]
-    first = strip(first)
-    remaining = strip(remaining)
+    first = first
+    remaining = remaining
     return vcat(String[first], wrap(remaining, w))
 end
 
