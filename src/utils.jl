@@ -79,8 +79,33 @@ function getXY(t::Terminals.TTYTerminal)
     return parse(Int, c), parse(Int, r)
 end
 
-canvassize() = Base.displaysize(stdout) |> reverse
+abstract type Terminal end
+abstract type JPEG end
 
+size(::Type{Terminal}) = Base.displaysize(stdout) |> reverse
+
+function size(::Type{JPEG}, filename)
+    fhandle = open(filename)
+    seek(fhandle, 0) # Read 0xff next
+    size = 2
+    ftype = 0
+    while ! ( 0xc0 <= ftype <= 0xcf )
+        read(fhandle, size)
+        byte = read(fhandle, 1)
+        while byte[1] == 0xff
+            byte = read(fhandle, 1)
+        end
+        ftype = byte[1]
+        size = read(fhandle, 2)[2] - 2
+    end
+    read(fhandle, 1)
+    h1, h2, w1, w2 = read(fhandle, 4)
+    return Int(UInt16(w1)<<8 + w2), Int(UInt16(h1)<<8 + h2)
+end
+
+
+
+canvassize() = size(Terminal)
 pos() = pos(TERMINAL)
 getXY() = getXY(TERMINAL)
 getX() = getX(TERMINAL)

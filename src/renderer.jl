@@ -3,15 +3,36 @@ abstract type PandocMarkdown end
 const CODEBLOCK_FOREGROUND = 0xafa88b
 const CODEBLOCK_BACKGROUND = 0xfbf3d2
 
-text(x) = repr(x)
-function text(l::Pandoc.Link)
-    return strip(text(l.content[1].target.url), ['"'])
+abstract type Terminal end
+abstract type JPEG end
+
+function size(::Type{JPEG}, filename)
+    fhandle = open(filename)
+    seek(fhandle, 0) # Read 0xff next
+    size = 2
+    ftype = 0
+    while ! ( 0xc0 <= ftype <= 0xcf )
+        read(fhandle, size)
+        byte = read(fhandle, 1)
+        while byte[1] == 0xff
+            byte = read(fhandle, 1)
+        end
+        ftype = byte[1]
+        size = read(fhandle, 2)[2] - 2
+    end
+    read(fhandle, 1)
+    h1, h2, w1, w2 = read(fhandle, 4)
+    return Int(UInt16(w1)<<8 + w2), Int(UInt16(h1)<<8 + h2)
 end
-text(h::Pandoc.Header) = join([text(e) for e in h.content])
-text(s::Pandoc.Str) = s.content
-text(s::Pandoc.Space) = " "
-text(p::Pandoc.Para) = join([text(e) for e in p.content])
-text(c::Pandoc.Code) = "`$(Crayon(foreground=:red)(c.content))`"
+
+function display_image(filename)
+
+    io = IOBuffer()
+    TerminalExtensions.iTerm2.display_file(read(filename); io=io, width="60", filename="image",inline=true,preserveAspectRatio=true);
+    img = String(take!(io))
+    return img[1:100]
+
+end
 
 const Slide = Vector{Pandoc.Element}
 
@@ -82,12 +103,20 @@ function Format.render(io::IO, ::MIME"text/ansi", tokens::Format.TokenIterator)
     end
 end
 
-render(e::Pandoc.Element) = error("Not implemented renderer for $e")
+function render(e::Pandoc.Image, io=stdout, c=Crayon())
+    data = read(e.target.url)
+    TerminalExtensions.iTerm2.display_file(data; io=io, width="60", filename="image",inline=true,preserveAspectRatio=true)
+end
+
+
+render(e::Pandoc.Element, io=stdout, c=Crayon()) = error("Not implemented renderer for $e")
 
 hex2rgb(c) = convert.(Int, ((c >> 16) % 0x100, (c >> 8) % 0x100, c % 0x100))
 
-function render(e::Pandoc.CodeBlock, x, y)
+function render(e::Pandoc.CodeBlock, io=stdout, c=Crayon())
     w = round(Int, getW() * 6 / 8)
+    x = getX()
+    y = getY()
     io = IOBuffer()
     if length(e.attr.classes) > 0 && e.attr.classes[1] == "julia"
         highlight(io, MIME("text/ansi"), e.content, Lexers.JuliaLexer)
@@ -123,43 +152,59 @@ function render(e::Pandoc.CodeBlock, x, y)
     end
 end
 
-render(h::Pandoc.Header, x, y) = render(h, x, y, Val{h.level}())
+render(h::Pandoc.Header) = render(h, Val{h.level}())
 
-function render(e::Pandoc.Header, x, y, level::Val{1})
-    t = text(e)
-    w = maximum(length(t))
-    c = Crayon(bold=true)
+render(e::Pandoc.Str, io=stdout, c=Crayon()) = print(io, c(e.content))
+render(e::Pandoc.Space, io=stdout, c=Crayon()) = print(io, c(" "))
+render(e::Pandoc.Code, io=stdout, c=Crayon(foreground=:red)) = print(io, "`", c("$(e.content)"), "`")
+
+function render(e::Pandoc.Header, level::Val{1})
+    w, h = canvassize()
+    x, y = round(Int, w / 2), round(Int, h / 2)
+    io = IOBuffer()
+    for se in e.content
+        render(se, io)
+    end
+    t = String(take!(io))
     lines = wrap(t)
+    c = Crayon(bold = true)
     for line in lines
-        cmove(x - round(Int, w / 2), y)
+        cmove(x - round(Int, length(line) / 2), y)
         print(c(line))
         y += 1
     end
-    draw_border(x - round(Int, w / 2) - 2, y - length(lines) - 1, w + 3, length(lines) + 1)
+    m = maximum(length.(lines))
+    draw_border(x - round(Int, m / 2) - 2, y - length(lines) - 1, m + 3, length(lines) + 1)
+    cmove(round(Int, w / 8), getY() + 4)
 end
 
-function render(e::Pandoc.Header, x, y, level::Val{2})
-    t = text(e)
-    w = maximum(length(t))
-    c = Crayon(bold=true)
+function render(e::Pandoc.Header, level::Val{2})
+    w, h = canvassize()
+    x, y = round(Int, w / 2), round(Int, h / 4)
+    io = IOBuffer()
+    for se in e.content
+        render(se, io)
+    end
+    t = String(take!(io))
     lines = wrap(t)
+    c = Crayon(bold = true)
     for line in lines
-        cmove(x - round(Int, w / 2), y)
+        cmove(x - round(Int, length(line) / 2), y)
         print(c(line))
         y += 1
     end
-    draw_border(x - round(Int, w / 2) - 2, y - length(lines) - 1, w + 3, length(lines) + 1)
-    cmove(getX(), getY() + 2)
+    m = maximum(length.(lines))
+    draw_border(x - round(Int, m / 2) - 2, y - length(lines) - 1, m + 3, length(lines) + 1)
+    cmove(round(Int, w / 8), getY() + 4)
 end
 
-function render(e::Pandoc.Para, x, y)
-    t = text(e)
-    c = Crayon()
-    for line in wrap(t)
-        cmove(x, y)
-        print(c(line))
-        y += 1
+function render(e::Pandoc.Para)
+    w, h = canvassize()
+    cmove(round(Int, w / 8), getY() + 2)
+    for se in e.content
+        render(se)
     end
+    cmove(round(Int, w / 8), getY() + 2)
 end
 
 wrap(s) = wrap(s, round(Int, getW() * 3 / 4))
@@ -177,23 +222,10 @@ end
 function render(s::Slides)
     clear()
     width, height = canvassize()
+    x, y = round(Int, width / 2), round(Int, height / 4)
+    cmove(x, y)
     for e in current_slide(s)
-        if typeof(e) == Pandoc.Header && e.level == 1
-            x, y = round(Int, width / 2), round(Int, height / 2)
-            render(e, x, y)
-        elseif typeof(e) == Pandoc.Header && e.level == 2
-            x, y = round(Int, width / 2), round(Int, height / 4)
-            render(e, x, y)
-        elseif typeof(e) == Pandoc.Para
-            x = round(Int, width / 8)
-            y = getY() + 2
-            render(e, x, y)
-        elseif typeof(e) == Pandoc.CodeBlock
-            x = round(Int, width / 8)
-            y = getY() + 2
-            render(e, x, y)
-
-        end
+        render(e)
     end
     cmove_bottom()
 end
