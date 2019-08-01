@@ -21,25 +21,29 @@ mutable struct termios
     c_ospeed::speed_t
 end
 TERM = Ref{termios}(
-                    termios(
+                    @static if Sys.islinux() termios(
                             0,
-                            0,
-                            0,
-                            0,
-                            (Tuple([0 for _ in 1:20])),
-                            0,
-                            0)
-                   );
-RESTORE = Ref{termios}(
-                    termios(
                             0,
                             0,
                             0,
                             0,
                             (Tuple([0 for _ in 1:20])),
                             0,
-                            0)
+                            0
+                           )
+                    else
+                                             termios(
+                            0,
+                            0,
+                            0,
+                            0,
+                            (Tuple([0 for _ in 1:20])),
+                            0,
+                            0
+                           )
+                    end
                    );
+RESTORE = deepcopy(TERM);
 
 const ICANON = Sys.islinux() ? 0o0000002 : 0x00000100
 const ECHO = Sys.islinux()   ? 0o0000010 : 0x00000008
