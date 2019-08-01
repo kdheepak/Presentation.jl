@@ -104,7 +104,6 @@ function size(::Type{JPEG}, filename)
 end
 
 
-
 canvassize() = size(Terminal)
 pos() = pos(TERMINAL)
 getXY() = getXY(TERMINAL)

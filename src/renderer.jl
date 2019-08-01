@@ -3,47 +3,17 @@ abstract type PandocMarkdown end
 const CODEBLOCK_FOREGROUND = 0xafa88b
 const CODEBLOCK_BACKGROUND = 0xfbf3d2
 
-abstract type Terminal end
-abstract type JPEG end
-
-function size(::Type{JPEG}, filename)
-    fhandle = open(filename)
-    seek(fhandle, 0) # Read 0xff next
-    size = 2
-    ftype = 0
-    while ! ( 0xc0 <= ftype <= 0xcf )
-        read(fhandle, size)
-        byte = read(fhandle, 1)
-        while byte[1] == 0xff
-            byte = read(fhandle, 1)
-        end
-        ftype = byte[1]
-        size = read(fhandle, 2)[2] - 2
-    end
-    read(fhandle, 1)
-    h1, h2, w1, w2 = read(fhandle, 4)
-    return Int(UInt16(w1)<<8 + w2), Int(UInt16(h1)<<8 + h2)
-end
-
-function display_image(filename)
-
-    io = IOBuffer()
-    TerminalExtensions.iTerm2.display_file(read(filename); io=io, width="60", filename="image",inline=true,preserveAspectRatio=true);
-    img = String(take!(io))
-    return img[1:100]
-
-end
-
 const Slide = Vector{Pandoc.Element}
 
 mutable struct Slides
     current_slide::Int
     content::Vector{Slide}
+    filename::String
 end
 
-function Slides(d::Pandoc.Document)
+function Slides(d::Pandoc.Document, filename::String)
     content = Pandoc.Element[]
-    slides = Slides(1, Slide[])
+    slides = Slides(1, Slide[], filename)
     for e in d.blocks
         if typeof(e) == Pandoc.Header && e.level == 1 && length(content) == 0
             push!(content, e)
@@ -103,9 +73,25 @@ function Format.render(io::IO, ::MIME"text/ansi", tokens::Format.TokenIterator)
     end
 end
 
+function render(e::Pandoc.BulletList, io=stdout, c=Crayon())
+
+end
+
 function render(e::Pandoc.Image, io=stdout, c=Crayon())
-    data = read(e.target.url)
-    TerminalExtensions.iTerm2.display_file(data; io=io, width="60", filename="image",inline=true,preserveAspectRatio=true)
+    w, h = canvassize()
+    cmove(round(Int, w / 3), getY() + 2)
+    data = read(abspath(joinpath(dirname(filename()), e.target.url)))
+    TerminalExtensions.iTerm2.display_file(
+                                           data;
+                                           io=io,
+                                           width="$(round(Int, w/3))",
+                                           filename="image",
+                                           inline=true,
+                                           preserveAspectRatio=true
+                                          )
+    title = e.target.title
+    cmove(round(Int, w / 2) - round(Int, length(title) / 2), getY() + 2)
+    print("$title")
 end
 
 
@@ -231,9 +217,10 @@ function render(s::Slides)
 end
 
 render(filename::String) = render(PandocMarkdown, filename)
-render(::Type{T}, filename::String) where T = render(read(T, filename))
+render(::Type{T}, filename::String) where T = render(read(T, filename), filename)
 
 current_slide(s::Slides) = s.content[s.current_slide]
+filename(s::Slides) = s.filename
 
 function next(s::Slides)
     if s.current_slide < length(s.content)

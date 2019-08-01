@@ -16,14 +16,13 @@ include("utils.jl")
 include("renderer.jl")
 
 TERMINAL = nothing
-
 SLIDES = nothing
 
 render() = render(SLIDES)
 
-function render(d::Pandoc.Document)
+function render(d::Pandoc.Document, filename::String="")
     global SLIDES
-    s = Slides(d)
+    s = Slides(d, filename)
     SLIDES = s
     return render(s)
 end
@@ -31,6 +30,7 @@ end
 next() = next(SLIDES)
 previous() = previous(SLIDES)
 current_slide() = current_slide(SLIDES)
+filename() = filename(SLIDES)
 
 function __init__()
     global TERMINAL
