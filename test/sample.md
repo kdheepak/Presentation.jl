@@ -1,5 +1,7 @@
 # Presentation.jl
 
+# Presentation.jl is a presentation framework written in Julia for presenting slides in the terminal in interactive manner
+
 ## Installation
 
 You can install `Presentation.jl` by using the following command:
@@ -23,4 +25,16 @@ end
 quadratic(a, sqr_term, b) = (-b + sqr_term) / 2a
 
 ```
+
+## Display images in the terminal
+
+![](../examples/cat.jpg)
+
+## List of bullets
+
+This is a list of items
+
+- Item 1
+- Item 2
+- Item 3
 
