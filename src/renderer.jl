@@ -1,5 +1,8 @@
 abstract type PandocMarkdown end
 
+const CODEBLOCK_FOREGROUND = 0xafa88b
+const CODEBLOCK_BACKGROUND = 0xfbf3d2
+
 text(x) = repr(x)
 function text(l::Pandoc.Link)
     return strip(text(l.content[1].target.url), ['"'])
@@ -81,21 +84,40 @@ end
 
 render(e::Pandoc.Element) = error("Not implemented renderer for $e")
 
+hex2rgb(c) = convert.(Int, ((c >> 16) % 0x100, (c >> 8) % 0x100, c % 0x100))
+
 function render(e::Pandoc.CodeBlock, x, y)
     w = round(Int, getW() * 6 / 8)
     io = IOBuffer()
-    highlight(io, MIME("text/ansi"), e.content, Lexers.JuliaLexer)
-    content = String(take!(io))
-    c = Crayon(background = (255, 255, 255))
+    if length(e.attr.classes) > 0 && e.attr.classes[1] == "julia"
+        highlight(io, MIME("text/ansi"), e.content, Lexers.JuliaLexer)
+        content = String(take!(io))
+    else
+        content = e.content
+    end
+    c = Crayon(background = hex2rgb(CODEBLOCK_BACKGROUND))
+    cmove(x, y)
+    print(c(repeat(" ", w)))
+    y += 1
+    # draw background
     save_y = y
-    for code_line in split(content, '\n')
+    split_content = split(content, '\n')
+    for (i, code_line) in enumerate(split_content)
         cmove(x, y)
-        println(c(repeat(" ", w)))
+        print(c(repeat(" ", w)))
+        print(Crayon(background = hex2rgb(CODEBLOCK_FOREGROUND))(" "))
         y += 1
     end
+    cmove(x, y)
+    print(c(repeat(" ", w)))
+    print(Crayon(background = hex2rgb(CODEBLOCK_FOREGROUND))(" "))
+    y += 1
+    cmove(x+1, y)
+    println(Crayon(foreground = hex2rgb(CODEBLOCK_FOREGROUND))(repeat("▀", w)))
+    # write code blocks
     y = save_y
-    for code_line in split(content, '\n')
-        cmove(x, y)
+    for code_line in split_content
+        cmove(x+2, y)
         println(c(code_line))
         y += 1
     end
@@ -127,6 +149,7 @@ function render(e::Pandoc.Header, x, y, level::Val{2})
         y += 1
     end
     draw_border(x - round(Int, w / 2) - 2, y - length(lines) - 1, w + 3, length(lines) + 1)
+    cmove(getX(), getY() + 2)
 end
 
 function render(e::Pandoc.Para, x, y)
