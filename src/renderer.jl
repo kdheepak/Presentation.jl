@@ -73,6 +73,17 @@ function Format.render(io::IO, ::MIME"text/ansi", tokens::Format.TokenIterator)
     end
 end
 
+function render(e::Pandoc.Link, xy=getXY(), io=stdout, c=Crayon())
+    iob = IOBuffer()
+    for se in e.content
+        render(se, getXY(), iob)
+    end
+    title = String(take!(iob))
+    url = e.target.url
+    # This seems to be an iTerm2 only feature
+    print("$ESC]8;;$url$ESC\\$title$ESC]8;;$ESC\\")
+end
+
 function render(es::Vector{Pandoc.Block}, xy=getXY(), io=stdout, c=Crayon())
     x, y = xy
     cmove(x + 4, y)
