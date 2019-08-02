@@ -8,6 +8,7 @@ const ESC = '\x1B'
 const NCCS = Sys.islinux() ? 32 : 20
 const tcflag_t = Sys.islinux() ? Cuint : Culong
 const speed_t = tcflag_t
+
 mutable struct termios
     c_iflag::tcflag_t
     c_oflag::tcflag_t
@@ -133,4 +134,17 @@ end
     print("$(Terminals.CSI)$(r);1H")
     print("$(Terminals.CSI)2J")
 end
+
+wrap(s) = wrap(s, round(Int, getW() * 3 / 4))
+
+function wrap(s, w::Int)
+    length(s) < w && return String[s]
+    i = findprev(" ", s, w)
+    i = (i == nothing) ? w : i[1]
+    first, remaining = s[1:i], s[i+1:end]
+    first = first
+    remaining = remaining
+    return vcat(String[first], wrap(remaining, w))
+end
+
 

@@ -1,45 +1,5 @@
-abstract type PandocMarkdown end
-
 const CODEBLOCK_FOREGROUND = 0xafa88b
 const CODEBLOCK_BACKGROUND = 0xfbf3d2
-
-const Slide = Vector{Pandoc.Element}
-
-mutable struct Slides
-    current_slide::Int
-    content::Vector{Slide}
-    filename::String
-end
-
-function Slides(d::Pandoc.Document, filename::String)
-    content = Pandoc.Element[]
-    slides = Slides(1, Slide[], filename)
-    for e in d.blocks
-        if typeof(e) == Pandoc.Header && e.level == 1 && length(content) == 0
-            push!(content, e)
-            push!(slides.content, content)
-            content = Pandoc.Element[]
-        elseif typeof(e) == Pandoc.Header && e.level == 1 && length(content) != 0
-            push!(slides.content, content)
-            content = Pandoc.Element[]
-            push!(content, e)
-        elseif typeof(e) == Pandoc.Header && e.level == 2 && length(content) == 0
-            push!(content, e)
-        elseif typeof(e) == Pandoc.Header && e.level == 2 && length(content) != 0
-            push!(slides.content, content)
-            content = Pandoc.Element[]
-            push!(content, e)
-        else
-            push!(content, e)
-        end
-    end
-    push!(slides.content, content)
-    return slides
-end
-
-function Base.read(::Type{PandocMarkdown}, filename::String)
-    return Pandoc.run_pandoc(filename)
-end
 
 draw_border(x, y, w, h) = draw_border(x, y, w, h, Crayon())
 
@@ -58,6 +18,9 @@ function draw_border(x, y, w, h, c)
 
 end
 
+"""
+Syntax Highlighter
+"""
 function Format.render(io::IO, ::MIME"text/ansi", tokens::Format.TokenIterator)
     for (str, id, style) in tokens
         fg = style.fg.active ? map(Int, (style.fg.r, style.fg.g, style.fg.b)) : :nothing
@@ -73,10 +36,12 @@ function Format.render(io::IO, ::MIME"text/ansi", tokens::Format.TokenIterator)
     end
 end
 
-function render(e::Pandoc.Link, xy=getXY(), io=stdout, c=Crayon())
+## Render functions
+
+function render(e::Pandoc.Link, io=stdout, c=Crayon())
     iob = IOBuffer()
     for se in e.content
-        render(se, getXY(), iob)
+        render(se, iob)
     end
     title = String(take!(iob))
     url = e.target.url
@@ -84,8 +49,8 @@ function render(e::Pandoc.Link, xy=getXY(), io=stdout, c=Crayon())
     print("$ESC]8;;$url$ESC\\$title$ESC]8;;$ESC\\")
 end
 
-function render(es::Vector{Pandoc.Block}, xy=getXY(), io=stdout, c=Crayon())
-    x, y = xy
+function render(es::Vector{Pandoc.Block}, io=stdout, c=Crayon())
+    x, y = getXY()
     cmove(x + 4, y)
     for e in es
         render(e)
@@ -93,11 +58,11 @@ function render(es::Vector{Pandoc.Block}, xy=getXY(), io=stdout, c=Crayon())
     cmove(x, getY())
 end
 
-function render(e::Pandoc.SoftBreak, xy = getXY(), io = stdout, c = Crayon())
+function render(e::Pandoc.SoftBreak, io = stdout, c = Crayon())
 end
 
-function render(e::Pandoc.Plain, xy=getXY(), io=stdout, c=Crayon())
-    x, y = xy
+function render(e::Pandoc.Plain, io=stdout, c=Crayon())
+    x, y = getXY()
     print(c("▶ "))
     for se in e.content
         render(se)
@@ -105,23 +70,23 @@ function render(e::Pandoc.Plain, xy=getXY(), io=stdout, c=Crayon())
     cmove(x, getY() + 2)
 end
 
-function render(e::Pandoc.OrderedList, xy=getXY(), io=stdout, c=Crayon())
-    x, y = xy
+function render(e::Pandoc.OrderedList, io=stdout, c=Crayon())
+    x, y = getXY()
     for items in e.content
         render(items)
     end
 end
 
-function render(e::Pandoc.BulletList, xy=getXY(), io=stdout, c=Crayon())
-    x, y = xy
+function render(e::Pandoc.BulletList, io=stdout, c=Crayon())
+    x, y = getXY()
     for items in e.content
         render(items)
     end
 end
 
-function render(e::Pandoc.Image, xy=getXY(), io=stdout, c=Crayon())
+function render(e::Pandoc.Image, io=stdout, c=Crayon())
     w, h = canvassize()
-    x, y = xy
+    x, y = getXY()
     cmove(round(Int, w / 3), y + 2)
     data = read(abspath(joinpath(dirname(filename()), e.target.url)))
     TerminalExtensions.iTerm2.display_file(
@@ -138,13 +103,13 @@ function render(e::Pandoc.Image, xy=getXY(), io=stdout, c=Crayon())
 end
 
 
-render(e::Pandoc.Element, xy=getXY(), io=stdout, c=Crayon()) = error("Not implemented renderer for $e")
+render(e::Pandoc.Element, io=stdout, c=Crayon()) = error("Not implemented renderer for $e")
 
 hex2rgb(c) = convert.(Int, ((c >> 16) % 0x100, (c >> 8) % 0x100, c % 0x100))
 
-function render(e::Pandoc.CodeBlock, xy=getXY(), io=stdout, c=Crayon())
+function render(e::Pandoc.CodeBlock, io=stdout, c=Crayon())
     w = round(Int, getW() * 6 / 8)
-    x, y = xy
+    x, y = getXY()
     io = IOBuffer()
     if length(e.attr.classes) > 0 && e.attr.classes[1] == "julia"
         highlight(io, MIME("text/ansi"), e.content, Lexers.JuliaLexer)
@@ -180,18 +145,18 @@ function render(e::Pandoc.CodeBlock, xy=getXY(), io=stdout, c=Crayon())
     end
 end
 
-render(h::Pandoc.Header, xy=getXY(), io=stdout, c=Crayon(bold = true)) = render(h, Val{h.level}(), xy, io, c)
+render(h::Pandoc.Header, io=stdout, c=Crayon(bold = true)) = render(h, Val{h.level}(), io, c)
 
-render(e::Pandoc.Str, xy=getXY(), io=stdout, c=Crayon()) = print(io, c(e.content))
-render(e::Pandoc.Space, xy=getXY(), io=stdout, c=Crayon()) = print(io, c(" "))
-render(e::Pandoc.Code, xy=getXY(), io=stdout, c=Crayon(foreground=:red)) = print(io, "`", c("$(e.content)"), "`")
+render(e::Pandoc.Str, io=stdout, c=Crayon()) = print(io, c(e.content))
+render(e::Pandoc.Space, io=stdout, c=Crayon()) = print(io, c(" "))
+render(e::Pandoc.Code, io=stdout, c=Crayon(foreground=:red)) = print(io, "`", c("$(e.content)"), "`")
 
-function render(e::Pandoc.Header, level::Val{1}, xy=getXY(), io=stdout, c=Crayon(bold = true))
+function render(e::Pandoc.Header, level::Val{1}, io=stdout, c=Crayon(bold = true))
     w, h = canvassize()
     x, y = round(Int, w / 2), round(Int, h / 2)
     iob = IOBuffer()
     for se in e.content
-        render(se, getXY(), iob)
+        render(se, iob)
     end
     t = String(take!(iob))
     lines = wrap(t)
@@ -205,12 +170,12 @@ function render(e::Pandoc.Header, level::Val{1}, xy=getXY(), io=stdout, c=Crayon
     cmove(round(Int, w / 8), getY() + 4)
 end
 
-function render(e::Pandoc.Header, level::Val{2}, xy=getXY(), io=stdout, c=Crayon(bold = true))
+function render(e::Pandoc.Header, level::Val{2}, io=stdout, c=Crayon(bold = true))
     w, h = canvassize()
     x, y = round(Int, w / 2), round(Int, h / 4)
     iob = IOBuffer()
     for se in e.content
-        render(se, getXY(), iob)
+        render(se, iob)
     end
     t = String(take!(iob))
     lines = wrap(t)
@@ -224,25 +189,13 @@ function render(e::Pandoc.Header, level::Val{2}, xy=getXY(), io=stdout, c=Crayon
     cmove(round(Int, w / 8), getY() + 4)
 end
 
-function render(e::Pandoc.Para, xy=getXY(), io=stdout, c=Crayon())
+function render(e::Pandoc.Para, io=stdout, c=Crayon())
     w, h = canvassize()
     cmove(round(Int, w / 8), getY() + 2)
     for se in e.content
         render(se)
     end
     cmove(round(Int, w / 8), getY() + 2)
-end
-
-wrap(s) = wrap(s, round(Int, getW() * 3 / 4))
-
-function wrap(s, w::Int)
-    length(s) < w && return String[s]
-    i = findprev(" ", s, w)
-    i = (i == nothing) ? w : i[1]
-    first, remaining = s[1:i], s[i+1:end]
-    first = first
-    remaining = remaining
-    return vcat(String[first], wrap(remaining, w))
 end
 
 function render(s::Slides)
@@ -259,19 +212,3 @@ end
 render(filename::String) = render(PandocMarkdown, filename)
 render(::Type{T}, filename::String) where T = render(read(T, filename), filename)
 
-current_slide(s::Slides) = s.content[s.current_slide]
-filename(s::Slides) = s.filename
-
-function next(s::Slides)
-    if s.current_slide < length(s.content)
-        s.current_slide += 1
-    end
-    render(s)
-end
-
-function previous(s::Slides)
-    if s.current_slide > 1
-        s.current_slide -= 1
-    end
-    render(s)
-end

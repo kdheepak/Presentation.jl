@@ -13,6 +13,7 @@ using TerminalExtensions
 export render, next, previous, current_slide
 
 include("utils.jl")
+include("slideshow.jl")
 include("renderer.jl")
 
 TERMINAL = nothing
