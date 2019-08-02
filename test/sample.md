@@ -30,11 +30,23 @@ quadratic(a, sqr_term, b) = (-b + sqr_term) / 2a
 
 ![](../examples/cat.jpg)
 
-## List of bullets
+## Bulleted list
 
-This is a list of items
+This is a list of items:
 
 - Item 1
+    - Sub Item 1
+        - Sub sub item 1
+        - Sub sub item 2
+    - Sub Item 2
 - Item 2
 - Item 3
 
+## Numbered list
+
+This is a list of items:
+
+1. Item 1
+    1. Sub Item 1
+2. Item 2
+3. Item 3
