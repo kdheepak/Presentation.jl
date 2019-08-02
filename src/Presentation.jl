@@ -7,7 +7,6 @@ import Base: read
 
 using Crayons
 using Highlights
-using Highlights.Format
 using TerminalExtensions
 
 export render, next, previous, current_slide

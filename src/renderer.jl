@@ -21,7 +21,7 @@ end
 """
 Syntax Highlighter
 """
-function Format.render(io::IO, ::MIME"text/ansi", tokens::Format.TokenIterator)
+function Highlights.Format.render(io::IO, ::MIME"text/ansi", tokens::Highlights.Format.TokenIterator)
     for (str, id, style) in tokens
         fg = style.fg.active ? map(Int, (style.fg.r, style.fg.g, style.fg.b)) : :nothing
         bg = style.bg.active ? map(Int, (style.bg.r, style.bg.g, style.bg.b)) : :nothing
@@ -38,10 +38,12 @@ end
 
 ## Render functions
 
-function render(e::Pandoc.Link, io=stdout, c=Crayon())
+render(e) = render(stdout, e)
+
+function render(io, e::Pandoc.Link)
     iob = IOBuffer()
     for se in e.content
-        render(se, iob)
+        render(iob, se)
     end
     title = String(take!(iob))
     url = e.target.url
@@ -49,7 +51,7 @@ function render(e::Pandoc.Link, io=stdout, c=Crayon())
     print("$ESC]8;;$url$ESC\\$title$ESC]8;;$ESC\\")
 end
 
-function render(es::Vector{Pandoc.Block}, io=stdout, c=Crayon())
+function render(io, es::Vector{Pandoc.Block})
     x, y = getXY()
     cmove(x + 4, y)
     for e in es
@@ -58,33 +60,33 @@ function render(es::Vector{Pandoc.Block}, io=stdout, c=Crayon())
     cmove(x, getY())
 end
 
-function render(e::Pandoc.SoftBreak, io = stdout, c = Crayon())
+function render(io, e::Pandoc.SoftBreak)
 end
 
-function render(e::Pandoc.Plain, io=stdout, c=Crayon())
+function render(io, e::Pandoc.Plain)
     x, y = getXY()
-    print(c("▶ "))
+    print("▶ ")
     for se in e.content
         render(se)
     end
     cmove(x, getY() + 2)
 end
 
-function render(e::Pandoc.OrderedList, io=stdout, c=Crayon())
+function render(io, e::Pandoc.OrderedList)
     x, y = getXY()
     for items in e.content
         render(items)
     end
 end
 
-function render(e::Pandoc.BulletList, io=stdout, c=Crayon())
+function render(io, e::Pandoc.BulletList)
     x, y = getXY()
     for items in e.content
         render(items)
     end
 end
 
-function render(e::Pandoc.Image, io=stdout, c=Crayon())
+function render(io, e::Pandoc.Image)
     w, h = canvassize()
     x, y = getXY()
     cmove(round(Int, w / 3), y + 2)
@@ -103,17 +105,17 @@ function render(e::Pandoc.Image, io=stdout, c=Crayon())
 end
 
 
-render(e::Pandoc.Element, io=stdout, c=Crayon()) = error("Not implemented renderer for $e")
+render(io, e::Pandoc.Element) = error("Not implemented renderer for $e")
 
 hex2rgb(c) = convert.(Int, ((c >> 16) % 0x100, (c >> 8) % 0x100, c % 0x100))
 
-function render(e::Pandoc.CodeBlock, io=stdout, c=Crayon())
+function render(io, e::Pandoc.CodeBlock)
     w = round(Int, getW() * 6 / 8)
     x, y = getXY()
-    io = IOBuffer()
     if length(e.attr.classes) > 0 && e.attr.classes[1] == "julia"
-        highlight(io, MIME("text/ansi"), e.content, Lexers.JuliaLexer)
-        content = String(take!(io))
+        iob = IOBuffer()
+        highlight(iob, MIME("text/ansi"), e.content, Lexers.JuliaLexer)
+        content = String(take!(iob))
     else
         content = e.content
     end
@@ -145,18 +147,19 @@ function render(e::Pandoc.CodeBlock, io=stdout, c=Crayon())
     end
 end
 
-render(h::Pandoc.Header, io=stdout, c=Crayon(bold = true)) = render(h, Val{h.level}(), io, c)
+render(io, e::Pandoc.Str) = print(io, e.content)
+render(io, e::Pandoc.Space) = print(io, " ")
+render(io, e::Pandoc.Code) = print(io, "`", Crayon(foreground=:red)("$(e.content)"), "`")
 
-render(e::Pandoc.Str, io=stdout, c=Crayon()) = print(io, c(e.content))
-render(e::Pandoc.Space, io=stdout, c=Crayon()) = print(io, c(" "))
-render(e::Pandoc.Code, io=stdout, c=Crayon(foreground=:red)) = print(io, "`", c("$(e.content)"), "`")
+render(io, h::Pandoc.Header) = render(io, h, Val{h.level}())
 
-function render(e::Pandoc.Header, level::Val{1}, io=stdout, c=Crayon(bold = true))
+function render(io, e::Pandoc.Header, level::Val{1})
+    c = Crayon(bold = true)
     w, h = canvassize()
     x, y = round(Int, w / 2), round(Int, h / 2)
     iob = IOBuffer()
     for se in e.content
-        render(se, iob)
+        render(iob, se)
     end
     t = String(take!(iob))
     lines = wrap(t)
@@ -170,12 +173,13 @@ function render(e::Pandoc.Header, level::Val{1}, io=stdout, c=Crayon(bold = true
     cmove(round(Int, w / 8), getY() + 4)
 end
 
-function render(e::Pandoc.Header, level::Val{2}, io=stdout, c=Crayon(bold = true))
+function render(io, e::Pandoc.Header, level::Val{2})
+    c = Crayon(bold = true)
     w, h = canvassize()
     x, y = round(Int, w / 2), round(Int, h / 4)
     iob = IOBuffer()
     for se in e.content
-        render(se, iob)
+        render(iob, se)
     end
     t = String(take!(iob))
     lines = wrap(t)
@@ -189,7 +193,7 @@ function render(e::Pandoc.Header, level::Val{2}, io=stdout, c=Crayon(bold = true
     cmove(round(Int, w / 8), getY() + 4)
 end
 
-function render(e::Pandoc.Para, io=stdout, c=Crayon())
+function render(io, e::Pandoc.Para)
     w, h = canvassize()
     cmove(round(Int, w / 8), getY() + 2)
     for se in e.content
