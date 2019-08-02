@@ -19,6 +19,12 @@ Use `next()` or `previous()` to move between slides.
 
 The motivation was to build a presentation tool that uses the text interface in a Terminal.
 I was interested in building it to learn the Julia programming language and to learn about ANSI terminal escape codes.
-Other tools exist for this purpose that may solve this problem better.
+
+Other similar tools:
+
+- [mdp](https://github.com/visit1985/mdp)
+- [patat](https://github.com/jaspervdj/patat)
+- [qov](https://github.com/chunqiuyiyu/qov)
+- [vtmc](https://github.com/jclulow/vtmc)
 
 
