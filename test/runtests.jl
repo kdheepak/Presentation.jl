@@ -1,6 +1,4 @@
 using Test
-using Logging
-using Dates
 
 using Presentation
 
@@ -44,7 +42,6 @@ macro includetests(testarg...)
 end
 
 function run_tests()
-    # Testing Topological components of the schema
     @time @testset "Begin tests" begin
         @includetests ARGS
     end
