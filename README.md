@@ -1,5 +1,7 @@
 # Presentation.jl
 
+![](https://user-images.githubusercontent.com/1813121/62408253-39816480-b5b5-11e9-950b-39dd2d6b9635.gif)
+
 ## Installation
 
 ```
