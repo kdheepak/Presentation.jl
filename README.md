@@ -5,7 +5,7 @@
 ## Installation
 
 ```
-Pkg.clone("https://github.com/kdheepak/Presentation.jl")
+(v1.1) pkg> add https://github.com/kdheepak/Presentation.jl
 ```
 
 ## Usage
