@@ -11,3 +11,7 @@ Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
 Pandoc = "f853b5e0-b243-11e9-0043-7da5023c5ee7"
 REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 TerminalExtensions = "d3a6a179-465e-5219-bd3e-0137f7fd17c7"
+
+[compat]
+julia = "1"
+
