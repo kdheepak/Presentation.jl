@@ -1,0 +1,48 @@
+## Documentation: http://docs.travis-ci.org/user/languages/julia/
+language: julia
+os:
+  - linux
+julia:
+  - 1.1
+  - nightly
+
+notifications:
+  email: false
+
+addons:
+  apt_packages:
+    - pandoc
+
+## uncomment the following lines to allow failures on nightly julia
+## (tests will run but not make your overall status red)
+matrix:
+  allow_failures:
+  - julia: nightly
+
+## uncomment the following lines to override the default test script
+script:
+  # debian-supplied pandoc is very old --> install manually
+  - pandoc_version=`wget -O - --max-redirect 0 https://github.com/jgm/pandoc/releases/latest 2>&1 | grep "Location:" | sed 's/.*\/tag\/\([^ "]*\).*/\1/'`
+  - pandoc_deb="pandoc-${pandoc_version}-1-amd64.deb"
+  - wget "https://github.com/jgm/pandoc/releases/download/${pandoc_version}/${pandoc_deb}"
+  - sudo dpkg -i ${pandoc_deb}
+  - rm ${pandoc_deb}
+  # Register the installed pandoc version in the build log
+  - pandoc -v
+  - julia --project --color=yes -e "import Pkg; Pkg.instantiate(); Pkg.build();"
+  - julia --check-bounds=yes --depwarn=no --color=yes --project -e "import Pkg; Pkg.test(coverage=true);"
+
+after_success:
+  - julia -e 'using Pkg; cd(Pkg.dir("Presentation")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+
+jobs:
+  include:
+    - stage: "Documentation"
+      julia: 1.0
+      os: linux
+      script:
+        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.build("Presentation"); Pkg.instantiate()'
+        - DOCUMENTER_DEBUG=true julia --project=docs/ docs/make.jl
+      after_success: skip
+
+
