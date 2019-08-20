@@ -40,6 +40,8 @@ end
 
 render(e) = render(stdout, e)
 
+render(io, e::Pandoc.RawBlock) = nothing
+
 function render(io, e::Pandoc.Link)
     iob = IOBuffer()
     for se in e.content
@@ -49,6 +51,15 @@ function render(io, e::Pandoc.Link)
     url = e.target.url
     # This seems to be an iTerm2 only feature
     print("$ESC]8;;$url$ESC\\$title$ESC]8;;$ESC\\")
+end
+
+function render(io, e::Pandoc.Strong)
+    c = Crayon(bold = true)
+    print(c)
+    for ec in e.content
+        render(ec)
+    end
+    print(inv(c))
 end
 
 function render(io, es::Vector{Pandoc.Block})
