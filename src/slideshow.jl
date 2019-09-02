@@ -54,4 +54,3 @@ function previous(s::Slides)
     end
     render(s)
 end
-

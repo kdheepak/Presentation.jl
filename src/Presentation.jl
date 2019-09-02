@@ -15,8 +15,8 @@ include("utils.jl")
 include("slideshow.jl")
 include("renderer.jl")
 
-TERMINAL = nothing
-SLIDES = nothing
+TERMINAL = nothing # Contains reference to the built in Terminal
+SLIDES = nothing # Contains reference to a `Slides` object
 
 render() = render(SLIDES)
 

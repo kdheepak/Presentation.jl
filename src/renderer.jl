@@ -187,7 +187,7 @@ end
 function render(io, e::Pandoc.Header, level::Val{2})
     c = Crayon(bold = true)
     w, h = canvassize()
-    x, y = round(Int, w / 2), round(Int, h / 4)
+    x, y = round(Int, w / 2), round(Int, h / 8)
     iob = IOBuffer()
     for se in e.content
         render(iob, se)
@@ -201,7 +201,7 @@ function render(io, e::Pandoc.Header, level::Val{2})
     end
     m = maximum(length.(lines))
     draw_border(x - round(Int, m / 2) - 2, y - length(lines) - 1, m + 3, length(lines) + 1)
-    cmove(round(Int, w / 8), getY() + 4)
+    cmove(round(Int, w / 8), getY() + 2)
 end
 
 function render(io, e::Pandoc.Para)
