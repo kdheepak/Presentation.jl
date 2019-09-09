@@ -53,6 +53,24 @@ function render(io, e::Pandoc.Link)
     print("$ESC]8;;$url$ESC\\$title$ESC]8;;$ESC\\")
 end
 
+function render(io, e::Pandoc.Strikeout)
+    c = Crayon(strikethrough = true)
+    print(c)
+    for ec in e.content
+        render(ec)
+    end
+    print(inv(c))
+end
+
+function render(io, e::Pandoc.Emph)
+    c = Crayon(italics = true)
+    print(c)
+    for ec in e.content
+        render(ec)
+    end
+    print(inv(c))
+end
+
 function render(io, e::Pandoc.Strong)
     c = Crayon(bold = true)
     print(c)
@@ -207,8 +225,17 @@ end
 function render(io, e::Pandoc.Para)
     w, h = canvassize()
     cmove(round(Int, w / 8), getY() + 2)
+    oldX, oldY = getXY()
     for se in e.content
         render(se)
+        newX, newY = getXY()
+        if newX > w * 7/8
+            cmove(round(Int, w / 8), newY + 1)
+            oldX, oldY = newX, newY
+        elseif newY > oldY
+            cmove(round(Int, w / 8), newY)
+            oldX, oldY = newX, newY
+        end
     end
     cmove(round(Int, w / 8), getY() + 2)
 end
