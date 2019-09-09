@@ -8,6 +8,7 @@ import Base: read
 using Crayons
 using Highlights
 using TerminalExtensions
+using Markdown
 
 export render, next, previous, current_slide
 

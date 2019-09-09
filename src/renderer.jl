@@ -251,6 +251,29 @@ function render(s::Slides)
     cmove_bottom()
 end
 
-render(filename::String) = render(PandocMarkdown, filename)
+function render(filename::String)
+
+    if Pandoc.exists()
+        render(PandocMarkdown, filename)
+    else
+        render(JuliaMarkdown, filename)
+    end
+
+end
+
+function render(md::Markdown.MD, filename)
+
+    data = Dict{String, Any}()
+    data["pandoc-api-version"] = v"0.0.1"
+    data["meta"] = Dict{String, Any}
+    data["blocks"] = Dict{String, Any}
+
+    for e in md.content
+        # TODO: convert JuliaMarkdown to PandocMarkdown
+        @show e
+    end
+
+end
+
 render(::Type{T}, filename::String) where T = render(read(T, filename), filename)
 

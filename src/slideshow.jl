@@ -1,4 +1,5 @@
 abstract type PandocMarkdown end
+abstract type JuliaMarkdown end
 
 const Slide = Vector{Pandoc.Element}
 
@@ -36,6 +37,13 @@ end
 
 function Base.read(::Type{PandocMarkdown}, filename::String)
     return Pandoc.run_pandoc(filename)
+end
+
+function Base.read(::Type{JuliaMarkdown}, filename::String)
+    data = open(filename) do f
+        Markdown.parse(f)
+    end
+    return data
 end
 
 current_slide(s::Slides) = s.content[s.current_slide]
