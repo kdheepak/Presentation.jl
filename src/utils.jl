@@ -53,6 +53,40 @@ const O_RDWR = Base.Filesystem.JL_O_RDWR
 const O_NOCTTY = Base.Filesystem.JL_O_NOCTTY
 const OS_HANDLE = Base.OS_HANDLE
 
+function getColor(t::Terminals.TTYTerminal)
+    fd = ccall(:jl_uv_file_handle, Base.OS_HANDLE, (Ptr{Cvoid},), stdin.handle)
+    systemerror("tcgetattr",
+                ccall(:tcgetattr, Cint, (Cint, Ptr{Cvoid}), fd, TERM) == -1)
+    systemerror("tcgetattr",
+                ccall(:tcgetattr, Cint, (Cint, Ptr{Cvoid}), fd, RESTORE) == -1)
+    TERM[].c_lflag &= ~(ICANON|ECHO)
+    systemerror("tcsetattr",
+                ccall(:tcsetattr, Cint, (Cint, Cint, Ptr{Cvoid}), fd, TCSANOW, TERM) == -1
+               )
+    write(stdout, "\e]11;?\a")
+    buf = UInt8[]
+    while true
+        ch = read(stdin, 1)[1]
+        if Char(ch) == ';'
+            break
+        end
+    end
+    @assert Char(read(stdin, 1)[1]) == 'r'
+    @assert Char(read(stdin, 1)[1]) == 'g'
+    @assert Char(read(stdin, 1)[1]) == 'b'
+    @assert Char(read(stdin, 1)[1]) == ':'
+    r = parse(UInt8, "0x$(String(read(stdin, 2)))")
+    @assert Char(read(stdin, 1)[1]) == '/'
+    g = parse(UInt8, "0x$(String(read(stdin, 2)))")
+    @assert Char(read(stdin, 1)[1]) == '/'
+    b = parse(UInt8, "0x$(String(read(stdin, 2)))")
+    systemerror("tcsetattr",
+                ccall(:tcsetattr, Cint, (Cint, Cint, Ptr{Cvoid}), fd, TCSANOW, RESTORE) == -1
+               )
+
+    return r, g, b
+end
+
 function getXY(t::Terminals.TTYTerminal)
     fd = ccall(:jl_uv_file_handle, Base.OS_HANDLE, (Ptr{Cvoid},), stdin.handle)
     systemerror("tcgetattr",
@@ -108,6 +142,7 @@ end
 canvassize() = size(Terminal)
 pos() = pos(TERMINAL)
 getXY() = getXY(TERMINAL)
+getColor() = getColor(TERMINAL)
 getX() = getX(TERMINAL)
 getY() = getY(TERMINAL)
 getW() = canvassize()[1]

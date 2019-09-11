@@ -9,9 +9,6 @@ You can install `Presentation.jl` by using the following command:
 (v1.1) pkg> add https://github.com/kdheepak/Presentation.jl
 ```
 
-This is a [link](https://github.com/kdheepak/Presentation.jl) to the repository.
-
-
 ## Bulleted list
 
 This is a list of items:
