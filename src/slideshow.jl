@@ -15,8 +15,6 @@ function Slides(d::Pandoc.Document, filename::String)
     for e in d.blocks
         if typeof(e) == Pandoc.Header && e.level == 1 && length(content) == 0
             push!(content, e)
-            push!(slides.content, content)
-            content = Pandoc.Element[]
         elseif typeof(e) == Pandoc.Header && e.level == 1 && length(content) != 0
             push!(slides.content, content)
             content = Pandoc.Element[]

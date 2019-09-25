@@ -110,9 +110,11 @@ end
 
 function render(io, e::Pandoc.BulletList)
     x, y = getXY()
+    cmove(x, getY() + 1)
     for items in e.content
         render(items)
     end
+    cmove(x, getY() + 1)
 end
 
 function render(io, e::Pandoc.Image)
@@ -219,7 +221,7 @@ function render(io, e::Pandoc.Header, level::Val{2})
     end
     m = maximum(length.(lines))
     draw_border(x - round(Int, m / 2) - 2, y - length(lines) - 1, m + 3, length(lines) + 1)
-    cmove(round(Int, w / 8), getY() + 2)
+    cmove(round(Int, w / 8), getY() + 4)
 end
 
 function render(io, e::Pandoc.Para)
