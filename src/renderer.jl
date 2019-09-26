@@ -1,20 +1,20 @@
 const CODEBLOCK_FOREGROUND = get(ENV, "JLPRESENTATION_CODEBLOCK_FOREGROUND", 0x909090) |> UInt32
 const CODEBLOCK_BACKGROUND = get(ENV, "JLPRESENTATION_CODEBLOCK_BACKGROUND", 0xf0f0f0) |> UInt32
 
-draw_border(x, y, w, h) = draw_border(x, y, w, h, Crayon())
+draw_border(io, x, y, w, h) = draw_border(io, x, y, w, h, Crayon())
 
-function draw_border(x, y, w, h, c)
+function draw_border(io, x, y, w, h, c)
 
-    cmove(x, y)             ; print(c(repeat("━", w)))
-    cmove(x, y + h)         ; print(c(repeat("━", w)))
+    cmove(x, y)             ; print(io, c(repeat("━", w)))
+    cmove(x, y + h)         ; print(io, c(repeat("━", w)))
     for i in 1:h
-        cmove(x, y + i)     ; print(c("┃"))
-        cmove(x + w, y + i) ; print(c("┃"))
+        cmove(x, y + i)     ; print(io, c("┃"))
+        cmove(x + w, y + i) ; print(io, c("┃"))
     end
-    cmove(x, y)             ; print(c("┏"))
-    cmove(x + w, y)         ; print(c("┓"))
-    cmove(x, y + h)         ; print(c("┗"))
-    cmove(x + w, y + h)     ; print(c("┛"))
+    cmove(x, y)             ; print(io, c("┏"))
+    cmove(x + w, y)         ; print(io, c("┓"))
+    cmove(x, y + h)         ; print(io, c("┗"))
+    cmove(x + w, y + h)     ; print(io, c("┛"))
 
 end
 
@@ -50,41 +50,41 @@ function render(io, e::Pandoc.Link)
     title = String(take!(iob))
     url = e.target.url
     # This seems to be an iTerm2 only feature
-    print("$ESC]8;;$url$ESC\\$title$ESC]8;;$ESC\\")
+    print(io, "$ESC]8;;$url$ESC\\$title$ESC]8;;$ESC\\")
 end
 
 function render(io, e::Pandoc.Strikeout)
     c = Crayon(strikethrough = true)
-    print(c)
+    print(io, c)
     for ec in e.content
-        render(ec)
+        render(io, ec)
     end
-    print(inv(c))
+    print(io, inv(c))
 end
 
 function render(io, e::Pandoc.Emph)
     c = Crayon(italics = true)
-    print(c)
+    print(io, c)
     for ec in e.content
-        render(ec)
+        render(io, ec)
     end
-    print(inv(c))
+    print(io, inv(c))
 end
 
 function render(io, e::Pandoc.Strong)
     c = Crayon(bold = true)
-    print(c)
+    print(io, c)
     for ec in e.content
-        render(ec)
+        render(io, ec)
     end
-    print(inv(c))
+    print(io, inv(c))
 end
 
 function render(io, es::Vector{Pandoc.Block})
     x, y = getXY()
     cmove(x + 4, y)
     for e in es
-        render(e)
+        render(io, e)
     end
     cmove(x, getY())
 end
@@ -94,9 +94,9 @@ end
 
 function render(io, e::Pandoc.Plain)
     x, y = getXY()
-    print("▶ ")
+    print(io, "▶ ")
     for se in e.content
-        render(se)
+        render(io, se)
     end
     cmove(x, getY() + 2)
 end
@@ -104,7 +104,7 @@ end
 function render(io, e::Pandoc.OrderedList)
     x, y = getXY()
     for items in e.content
-        render(items)
+        render(io, items)
     end
 end
 
@@ -112,7 +112,7 @@ function render(io, e::Pandoc.BulletList)
     x, y = getXY()
     cmove(x, getY() + 1)
     for items in e.content
-        render(items)
+        render(io, items)
     end
     cmove(x, getY() + 1)
 end
@@ -132,7 +132,7 @@ function render(io, e::Pandoc.Image)
                                           )
     title = e.target.title
     cmove(round(Int, w / 2) - round(Int, length(title) / 2), getY() + 2)
-    print("$title")
+    print(io, "$title")
 end
 
 
@@ -152,28 +152,28 @@ function render(io, e::Pandoc.CodeBlock)
     end
     c = Crayon(background = hex2rgb(CODEBLOCK_BACKGROUND))
     cmove(x, y)
-    print(c(repeat(" ", w)))
+    print(io, c(repeat(" ", w)))
     y += 1
     # draw background
     save_y = y
     split_content = split(content, '\n')
     for (i, code_line) in enumerate(split_content)
         cmove(x, y)
-        print(c(repeat(" ", w)))
-        print(Crayon(background = hex2rgb(CODEBLOCK_FOREGROUND))(" "))
+        print(io, c(repeat(" ", w)))
+        print(io, Crayon(background = hex2rgb(CODEBLOCK_FOREGROUND))(" "))
         y += 1
     end
     cmove(x, y)
-    print(c(repeat(" ", w)))
-    print(Crayon(background = hex2rgb(CODEBLOCK_FOREGROUND))(" "))
+    print(io, c(repeat(" ", w)))
+    print(io, Crayon(background = hex2rgb(CODEBLOCK_FOREGROUND))(" "))
     y += 1
     cmove(x+1, y)
-    println(Crayon(foreground = hex2rgb(CODEBLOCK_FOREGROUND))(repeat("▀", w)))
+    println(io, Crayon(foreground = hex2rgb(CODEBLOCK_FOREGROUND))(repeat("▀", w)))
     # write code blocks
     y = save_y
     for code_line in split_content
         cmove(x+2, y)
-        println(c(code_line))
+        println(io, c(code_line))
         y += 1
     end
 end
@@ -196,11 +196,11 @@ function render(io, e::Pandoc.Header, level::Val{1})
     lines = wrap(t)
     for line in lines
         cmove(x - round(Int, length(line) / 2), y)
-        print(c(line))
+        print(io, c(line))
         y += 1
     end
     m = maximum(length.(lines))
-    draw_border(x - round(Int, m / 2) - 2, y - length(lines) - 1, m + 3, length(lines) + 1)
+    draw_border(io, x - round(Int, m / 2) - 2, y - length(lines) - 1, m + 3, length(lines) + 1)
     cmove(round(Int, w / 8), getY() + 4)
 end
 
@@ -216,11 +216,11 @@ function render(io, e::Pandoc.Header, level::Val{2})
     lines = wrap(t)
     for line in lines
         cmove(x - round(Int, length(line) / 2), y)
-        print(c(line))
+        print(io, c(line))
         y += 1
     end
     m = maximum(length.(lines))
-    draw_border(x - round(Int, m / 2) - 2, y - length(lines) - 1, m + 3, length(lines) + 1)
+    draw_border(io, x - round(Int, m / 2) - 2, y - length(lines) - 1, m + 3, length(lines) + 1)
     cmove(round(Int, w / 8), getY() + 4)
 end
 
@@ -229,7 +229,7 @@ function render(io, e::Pandoc.Para)
     cmove(round(Int, w / 8), getY() + 2)
     oldX, oldY = getXY()
     for se in e.content
-        render(se)
+        render(io, se)
         newX, newY = getXY()
         if newX > w * 7/8
             cmove(round(Int, w / 8), newY + 1)
@@ -242,28 +242,28 @@ function render(io, e::Pandoc.Para)
     cmove(round(Int, w / 8), getY() + 2)
 end
 
-function render(s::Slides)
+function render(io, s::Slides)
     clear()
     width, height = canvassize()
     x, y = round(Int, width / 2), round(Int, height / 4)
     cmove(x, y)
     for e in current_slide(s)
-        render(e)
+        render(io, e)
     end
     cmove_bottom()
 end
 
-function render(filename::String)
+function render(io, filename::AbstractString)
 
     if Pandoc.exists()
-        render(PandocMarkdown, filename)
+        render(io, PandocMarkdown, filename)
     else
-        render(JuliaMarkdown, filename)
+        render(io, JuliaMarkdown, filename)
     end
 
 end
 
-function render(md::Markdown.MD, filename)
+function render(io, md::Markdown.MD, filename)
 
     data = Dict{String, Any}()
     data["pandoc-api-version"] = v"0.0.1"
@@ -277,5 +277,12 @@ function render(md::Markdown.MD, filename)
 
 end
 
-render(::Type{T}, filename::String) where T = render(read(T, filename), filename)
+function render(io, d::Pandoc.Document, filename::String="")
+    global SLIDES
+    s = Slides(d, filename)
+    SLIDES = s
+    return render(io, s)
+end
+
+render(io, ::Type{T}, filename::String) where T = render(io, read(T, filename), filename)
 

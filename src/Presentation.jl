@@ -20,14 +20,6 @@ TERMINAL = nothing # Contains reference to the built in Terminal
 SLIDES = nothing # Contains reference to a `Slides` object
 
 render() = render(SLIDES)
-
-function render(d::Pandoc.Document, filename::String="")
-    global SLIDES
-    s = Slides(d, filename)
-    SLIDES = s
-    return render(s)
-end
-
 next() = next(SLIDES)
 previous() = previous(SLIDES)
 current_slide() = current_slide(SLIDES)
