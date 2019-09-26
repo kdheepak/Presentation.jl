@@ -28,7 +28,7 @@ TERM = Ref{termios}(
                             0,
                             0,
                             0,
-                            (Tuple([0 for _ in 1:20])),
+                            Tuple([0 for _ in 1:NCCS]),
                             0,
                             0
                            )
@@ -38,7 +38,7 @@ TERM = Ref{termios}(
                             0,
                             0,
                             0,
-                            (Tuple([0 for _ in 1:20])),
+                            Tuple([0 for _ in 1:NCCS]),
                             0,
                             0
                            )
