@@ -32,8 +32,10 @@ before_install:
 
 ## uncomment the following lines to override the default test script
 script:
+  - while sleep 9m; do echo "=====[ $SECONDS seconds still running ]====="; done &
   - julia --project --color=yes -e "import Pkg; Pkg.instantiate(); Pkg.build();"
   - julia --check-bounds=yes --depwarn=no --color=yes --project -e "import Pkg; Pkg.test(coverage=true);"
+  - kill %1
 
 after_success:
   - julia -e 'using Pkg; cd(Pkg.dir("Presentation")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
