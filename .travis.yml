@@ -10,11 +10,25 @@ julia:
 notifications:
   email: false
 
+env:
+  global:
+  - PANDOC=~/.pandoc
+  - PANDOC_DEB="https://github.com/jgm/pandoc/releases/download/2.7.3/pandoc-2.7.3-1-amd64.deb"
+
 ## uncomment the following lines to allow failures on nightly julia
 ## (tests will run but not make your overall status red)
 matrix:
   allow_failures:
   - julia: nightly
+
+cache:
+  directories:
+    - $PANDOC
+
+before_install:
+    - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install pandoc; fi
+    - if [ "$TRAVIS_OS_NAME" = "linux" ]; then if [[ ! -f "$PANDOC/pandoc.deb" ]]; then curl -L "$PANDOC_DEB" > "$PANDOC/pandoc.deb" && dpkg -x "$PANDOC/pandoc.deb" "$PANDOC"; fi ; fi
+    - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export PATH="$PANDOC/usr/bin:$PATH"; fi
 
 ## uncomment the following lines to override the default test script
 script:
