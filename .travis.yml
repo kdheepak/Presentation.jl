@@ -2,16 +2,13 @@
 language: julia
 os:
   - linux
+  - osx
 julia:
-  - 1.1
+  - 1
   - nightly
 
 notifications:
   email: false
-
-addons:
-  apt_packages:
-    - pandoc
 
 ## uncomment the following lines to allow failures on nightly julia
 ## (tests will run but not make your overall status red)
@@ -21,14 +18,6 @@ matrix:
 
 ## uncomment the following lines to override the default test script
 script:
-  # debian-supplied pandoc is very old --> install manually
-  - pandoc_version=`wget -O - --max-redirect 0 https://github.com/jgm/pandoc/releases/latest 2>&1 | grep "Location:" | sed 's/.*\/tag\/\([^ "]*\).*/\1/'`
-  - pandoc_deb="pandoc-${pandoc_version}-1-amd64.deb"
-  - wget "https://github.com/jgm/pandoc/releases/download/${pandoc_version}/${pandoc_deb}"
-  - sudo dpkg -i ${pandoc_deb}
-  - rm ${pandoc_deb}
-  # Register the installed pandoc version in the build log
-  - pandoc -v
   - julia --project --color=yes -e "import Pkg; Pkg.instantiate(); Pkg.build();"
   - julia --check-bounds=yes --depwarn=no --color=yes --project -e "import Pkg; Pkg.test(coverage=true);"
 
