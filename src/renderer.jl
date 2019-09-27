@@ -94,10 +94,23 @@ end
 
 function render(io, e::Pandoc.Plain)
     x, y = getXY()
+    w, h = canvassize()
+
+    oldX, oldY = getXY()
     print(io, "▶ ")
+
     for se in e.content
         render(io, se)
+        newX, newY = getXY()
+        if newX > w * 7/8
+            cmove(x, newY + 1)
+            oldX, oldY = newX, newY
+        elseif newY > oldY
+            cmove(x, newY)
+            oldX, oldY = newX, newY
+        end
     end
+
     cmove(x, getY() + 2)
 end
 
