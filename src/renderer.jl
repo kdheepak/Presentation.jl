@@ -278,15 +278,9 @@ end
 
 function render(io, md::Markdown.MD, filename)
 
-    data = Dict{String, Any}()
-    data["pandoc-api-version"] = v"0.0.1"
-    data["meta"] = Dict{String, Any}
-    data["blocks"] = Dict{String, Any}
+    d = convert(Pandoc.Document, md)
 
-    for e in md.content
-        # TODO: convert JuliaMarkdown to PandocMarkdown
-        @show e
-    end
+    render(io, d, filename)
 
 end
 

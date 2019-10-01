@@ -33,16 +33,9 @@ function Slides(d::Pandoc.Document, filename::String)
     return slides
 end
 
-function Base.read(::Type{PandocMarkdown}, filename::String)
-    return Pandoc.run_pandoc(filename)
-end
+Base.read(::Type{PandocMarkdown}, filename::String) = Pandoc.parse_file(filename)
 
-function Base.read(::Type{JuliaMarkdown}, filename::String)
-    data = open(filename) do f
-        Markdown.parse(f)
-    end
-    return data
-end
+Base.read(::Type{JuliaMarkdown}, filename::String) = Markdown.parse_file(filename)
 
 current_slide(s::Slides) = s.content[s.current_slide]
 filename(s::Slides) = s.filename
