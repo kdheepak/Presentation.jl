@@ -266,30 +266,23 @@ function render(io, s::Slides)
     cmove_bottom()
 end
 
-function render(io, filename::AbstractString)
-
-    if Pandoc.exists()
-        render(io, PandocMarkdown, filename)
-    else
-        render(io, JuliaMarkdown, filename)
-    end
-
-end
-
 function render(io, md::Markdown.MD, filename)
-
     d = convert(Pandoc.Document, md)
-
     render(io, d, filename)
-
 end
 
-function render(io, d::Pandoc.Document, filename::String="")
+function render(io, d::Pandoc.Document, filename::AbstractString="")
     global SLIDES
     s = Slides(d, filename)
     SLIDES = s
     return render(io, s)
 end
 
-render(io, ::Type{T}, filename::String) where T = render(io, read(T, filename), filename)
+render(io, filename::AbstractString) = Pandoc.exists() ? render(io, PandocMarkdown, filename) : render(io, JuliaMarkdown, filename)
+
+render(io, ::Type{T}, filename::AbstractString) where T = render(io, read(T, filename), filename)
+
+Base.read(::Type{PandocMarkdown}, filename::AbstractString) = Pandoc.parse_file(filename)
+
+Base.read(::Type{JuliaMarkdown}, filename::AbstractString) = Markdown.parse_file(filename)
 

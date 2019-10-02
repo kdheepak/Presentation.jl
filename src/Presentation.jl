@@ -12,6 +12,9 @@ using Markdown
 
 export render, next, previous, current_slide
 
+abstract type PandocMarkdown end
+abstract type JuliaMarkdown end
+
 include("utils.jl")
 include("slideshow.jl")
 include("renderer.jl")

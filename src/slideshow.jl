@@ -1,6 +1,3 @@
-abstract type PandocMarkdown end
-abstract type JuliaMarkdown end
-
 const Slide = Vector{Pandoc.Element}
 
 mutable struct Slides
@@ -32,10 +29,6 @@ function Slides(d::Pandoc.Document, filename::String)
     push!(slides.content, content)
     return slides
 end
-
-Base.read(::Type{PandocMarkdown}, filename::String) = Pandoc.parse_file(filename)
-
-Base.read(::Type{JuliaMarkdown}, filename::String) = Markdown.parse_file(filename)
 
 current_slide(s::Slides) = s.content[s.current_slide]
 filename(s::Slides) = s.filename
