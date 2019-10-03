@@ -1,32 +1,22 @@
-using Documenter, Presentation
+using Documenter, Presentation, DocumenterMarkdown
 
-mkpath(joinpath(@__DIR__, "src"))
-cp(joinpath(@__DIR__, "../README.md"), joinpath(@__DIR__, "src/index.md"), force=true)
-cp(joinpath(@__DIR__, "../LICENSE"), joinpath(@__DIR__, "src/LICENSE"), force=true)
-
-# Build documentation.
-# ====================
+cp(joinpath(@__DIR__, "../README.md"), joinpath(@__DIR__, "./src/index.md"), force=true, follow_symlinks=true)
 
 makedocs(
-    # options
-    modules = [
-               Presentation,
-              ],
-    doctest = false,
-    clean = false,
-    format = Documenter.HTML(),
-    sitename = "Presentation.jl",
-    authors = "Dheepak Krishnamurthy",
-    pages = Any[
-        "Home" => "index.md"
-       ]
-)
-
-# Deploy built documentation from Travis.
-# =======================================
+         sitename="Presentation.jl documentation",
+         format = Markdown()
+        )
 
 deploydocs(
-    # options
-    target = "build",
-    repo = "github.com/kdheepak/Presentation.jl.git"
+    repo = "github.com/kdheepak/Presentation.jl.git",
+    deps = Deps.pip(
+                   "mkdocs==0.17.5",
+                   "mkdocs-material==2.9.4",
+                   "python-markdown-math",
+                   "pygments",
+                   "pymdown-extensions",
+                   ),
+    make = () -> run(`mkdocs build`),
+    target = "site",
 )
+
