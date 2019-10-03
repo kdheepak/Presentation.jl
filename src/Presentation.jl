@@ -7,6 +7,8 @@ import Base: read
 
 using Crayons
 using Highlights
+using Highlights.Tokens
+using Highlights.Lexers
 using TerminalExtensions
 using Markdown
 

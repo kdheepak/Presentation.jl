@@ -1,7 +1,4 @@
 
-using Highlights.Tokens
-using Highlights.Lexers
-
 abstract type PythonLexer <: AbstractLexer end
 
 @lexer PythonLexer let
