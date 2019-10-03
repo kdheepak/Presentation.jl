@@ -1,5 +1,9 @@
-const CODEBLOCK_FOREGROUND = get(ENV, "JLPRESENTATION_CODEBLOCK_FOREGROUND", 0x909090) |> UInt32
-const CODEBLOCK_BACKGROUND = get(ENV, "JLPRESENTATION_CODEBLOCK_BACKGROUND", 0xf0f0f0) |> UInt32
+const CODEBLOCK_FOREGROUND = get(ENV, "PRESENTATION_JL_CODEBLOCK_FOREGROUND", 0x909090) |> UInt32
+const CODEBLOCK_BACKGROUND = get(ENV, "PRESENTATION_JL_CODEBLOCK_BACKGROUND", 0xf0f0f0) |> UInt32
+const PRESENTATION_JL_LEXERS = Dict(
+                                    "julia" => JuliaLexer,
+                                    # "python" => PythonLexer,
+                                   )
 
 draw_border(io, x, y, w, h) = draw_border(io, x, y, w, h, Crayon())
 
@@ -156,10 +160,15 @@ hex2rgb(c) = convert.(Int, ((c >> 16) % 0x100, (c >> 8) % 0x100, c % 0x100))
 function render(io, e::Pandoc.CodeBlock)
     w = round(Int, getW() * 6 / 8)
     x, y = getXY()
-    if length(e.attr.classes) > 0 && e.attr.classes[1] == "julia"
-        iob = IOBuffer()
-        highlight(iob, MIME("text/ansi"), e.content, Lexers.JuliaLexer)
-        content = String(take!(iob))
+    if length(e.attr.classes) > 0
+        lexer = get(PRESENTATION_JL_LEXERS, e.attr.classes[1], AbstractLexer)
+        if lexer == AbstractLexer
+            content = e.content
+        else
+            iob = IOBuffer()
+            highlight(iob, MIME("text/ansi"), e.content, lexer)
+            content = String(take!(iob))
+        end
     else
         content = e.content
     end
