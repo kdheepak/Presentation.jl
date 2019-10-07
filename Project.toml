@@ -1,7 +1,7 @@
 name = "Presentation"
 uuid = "8bd9f6a2-9625-11e9-045b-d30bc2bc79c3"
 authors = ["Dheepak Krishnamurthy <me@kdheepak.com>"]
-version = "0.2.1"
+version = "0.2.2"
 
 [deps]
 Crayons = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
