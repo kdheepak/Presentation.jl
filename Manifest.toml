@@ -57,9 +57,9 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [[Pandoc]]
 deps = ["JSON", "Markdown"]
-git-tree-sha1 = "abad748812540b32405fd948b222cfdf430dfffb"
+git-tree-sha1 = "824111ad3d9834c50434fcc2768e60add2e1301d"
 uuid = "f853b5e0-b243-11e9-0043-7da5023c5ee7"
-version = "0.2.4"
+version = "0.2.5"
 
 [[Parsers]]
 deps = ["Dates", "Test"]
