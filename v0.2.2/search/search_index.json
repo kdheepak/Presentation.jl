@@ -1,0 +1,39 @@
+{
+    "docs": [
+        {
+            "location": "/", 
+            "text": "Presentation.jl\n\n\n\n\n\n\nInstallation\n\n\n(\nv1\n.\n1\n)\n \npkg\n \nadd\n \nPresentation\n\n\n\n\n\n\n\n\nUsage\n\n\nusing\n \nPresentation\n\n\nrender\n(\n/path/to/filename.md\n)\n\n\n\n\n\n\nUse \nnext()\n or \nprevious()\n to move between slides.\n\n\n\n\nMotivation\n\n\nThe motivation was to build a presentation tool that uses the text interface in a terminal.\n\n\nOther similar tools:\n\n\n\n\nmdp\n\n\npatat\n\n\nqov\n\n\nvtmc", 
+            "title": "Home"
+        }, 
+        {
+            "location": "/#presentationjl", 
+            "text": "", 
+            "title": "Presentation.jl"
+        }, 
+        {
+            "location": "/#installation", 
+            "text": "( v1 . 1 )   pkg   add   Presentation", 
+            "title": "Installation"
+        }, 
+        {
+            "location": "/#usage", 
+            "text": "using   Presentation  render ( /path/to/filename.md )   Use  next()  or  previous()  to move between slides.", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/#motivation", 
+            "text": "The motivation was to build a presentation tool that uses the text interface in a terminal.  Other similar tools:   mdp  patat  qov  vtmc", 
+            "title": "Motivation"
+        }, 
+        {
+            "location": "/usage/", 
+            "text": "Usage\n\n\nTo use \nPresentation.jl\n in Julia, first add it:\n\n\n(\nv1\n.\n1\n)\n \nadd\n \nPresentation\n\n\n\n\n\n\nThen you can run the following:\n\n\njulia\n \nusing\n \nPresentation\n\n\njulia\n \nrender\n(\n/path/to/file.md\n)\n\n\n\n\n\n\nYou move through slides by using \nnext()\n and \nprevious()\n.", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/usage/#usage", 
+            "text": "To use  Presentation.jl  in Julia, first add it:  ( v1 . 1 )   add   Presentation   Then you can run the following:  julia   using   Presentation  julia   render ( /path/to/file.md )   You move through slides by using  next()  and  previous() .", 
+            "title": "Usage"
+        }
+    ]
+}
