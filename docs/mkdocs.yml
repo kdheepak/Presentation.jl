@@ -1,14 +1,13 @@
-site_name: 'Pandoc.jl'
+site_name: 'Presentation.jl'
 site_author: 'Dheepak Krishnamurthy'
 
 repo_name: 'GitHub'
-repo_url: 'https://github.com/kdheepak/Pandoc.jl'
+repo_url: 'https://github.com/kdheepak/Presentation.jl'
 edit_uri: 'tree/master/docs/src'
 
 pages:
   - Home: index.md
   - Usage: usage.md
-  - API: api.md
 
 docs_dir: 'build'
 
